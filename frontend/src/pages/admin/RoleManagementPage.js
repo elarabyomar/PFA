@@ -13,6 +13,7 @@ import {
 import { Add as AddIcon } from '@mui/icons-material';
 import { useApi } from '../../hooks/useApi';
 import { roleService } from '../../services/roleService';
+import { formatDate } from '../../utils/validation';
 import CreateRoleModal from '../../components/admin/CreateRoleModal';
 import EditRoleModal from '../../components/admin/EditRoleModal';
 import DeleteRoleDialog from '../../components/admin/DeleteRoleDialog';
@@ -80,10 +81,7 @@ const RoleManagementPage = () => {
     loadRoles();
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('fr-FR');
-  };
+
 
   return (
     <Box>

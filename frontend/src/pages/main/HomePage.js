@@ -8,28 +8,47 @@ import {
   Avatar,
   Chip,
   Divider,
+  Alert,
+  Button,
 } from '@mui/material';
 import {
   Person as PersonIcon,
   Email as EmailIcon,
   CalendarToday as CalendarIcon,
   Security as SecurityIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../context/AuthContext';
+import { formatDate } from '../../utils/validation';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
-  const { user } = useAuth();
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
+  const { user, requiresPasswordChange } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <Box>
+      {requiresPasswordChange && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 3 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small"
+              startIcon={<LockIcon />}
+              onClick={() => navigate('/change-password')}
+            >
+              Changer maintenant
+            </Button>
+          }
+        >
+          <Typography variant="body2" fontWeight="medium">
+            Attention : Votre mot de passe par défaut doit être changé pour des raisons de sécurité.
+          </Typography>
+        </Alert>
+      )}
+
       <Typography variant="h4" component="h1" gutterBottom>
         Bienvenue, {user?.prenom} !
       </Typography>
@@ -63,6 +82,15 @@ const HomePage = () => {
                     icon={<SecurityIcon />}
                     sx={{ mt: 1 }}
                   />
+                  {requiresPasswordChange && (
+                    <Chip
+                      label="Mot de passe à changer"
+                      color="warning"
+                      size="small"
+                      icon={<LockIcon />}
+                      sx={{ mt: 1, ml: 1 }}
+                    />
+                  )}
                 </Box>
               </Box>
 

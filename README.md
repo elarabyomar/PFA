@@ -1,192 +1,157 @@
-# Système d'Authentification - Backend + Frontend
+# Crystal Assur - Système d'Authentification
 
-Un système d'authentification complet avec backend FastAPI et frontend React.
+Un système d'authentification complet avec gestion des utilisateurs et des rôles, développé avec FastAPI (backend) et React (frontend).
 
 ## 🏗️ Architecture
 
 ```
 auth/
-├── backend/          # API FastAPI
-│   ├── app/         # Point d'entrée
-│   ├── config/      # Configuration DB
-│   ├── controller/  # Contrôleurs API
-│   ├── service/     # Logique métier
-│   ├── repository/  # Accès aux données
-│   ├── model/       # Modèles SQLAlchemy
-│   ├── dto/         # Data Transfer Objects
-│   └── security/    # Middleware auth
-├── frontend/        # Application React
-│   ├── src/         # Code source
-│   ├── public/      # Fichiers publics
-│   └── Dockerfile   # Configuration Docker
-└── docker-compose.yml  # Orchestration complète
+├── backend/                 # API FastAPI
+│   ├── app/
+│   │   └── main.py         # Point d'entrée de l'API
+│   ├── controller/          # Contrôleurs API
+│   ├── service/            # Logique métier
+│   ├── model/              # Modèles de données
+│   ├── repository/         # Accès aux données
+│   ├── dto/               # Objets de transfert
+│   ├── security/          # Middleware d'authentification
+│   └── config/            # Configuration
+├── frontend/               # Application React
+│   ├── src/
+│   │   ├── components/     # Composants réutilisables
+│   │   ├── pages/         # Pages de l'application
+│   │   ├── services/      # Services API
+│   │   ├── context/       # Context React
+│   │   ├── hooks/         # Hooks personnalisés
+│   │   └── utils/         # Utilitaires
+│   └── public/            # Fichiers statiques
+└── docker-compose.yml      # Configuration Docker
 ```
 
-## 🚀 Technologies
+## 🚀 Fonctionnalités
+
+### Authentification
+- ✅ Connexion avec email/mot de passe
+- ✅ JWT tokens avec expiration
+- ✅ Gestion des sessions
+- ✅ Protection des routes
+
+### Gestion des Utilisateurs
+- ✅ CRUD complet des utilisateurs
+- ✅ Génération automatique des mots de passe (format YYYYMMDD)
+- ✅ Réinitialisation des mots de passe
+- ✅ Gestion des rôles
+
+### Gestion des Rôles
+- ✅ Création/modification/suppression des rôles
+- ✅ Rôles système (admin, user) protégés
+- ✅ Permissions granulaires
+
+### Interface Admin
+- ✅ Dashboard administrateur
+- ✅ Gestion des utilisateurs
+- ✅ Gestion des rôles
+- ✅ Changement du mot de passe admin par défaut
+
+## 🛠️ Technologies
 
 ### Backend
-- **FastAPI** - Framework web Python
-- **SQLAlchemy** - ORM
+- **FastAPI** - Framework web moderne et rapide
+- **SQLAlchemy** - ORM pour PostgreSQL
 - **PostgreSQL** - Base de données
-- **JWT** - Authentification
-- **bcrypt** - Hachage des mots de passe
+- **JWT** - Authentification par tokens
+- **Passlib** - Hachage des mots de passe
+- **Alembic** - Migrations de base de données
 
 ### Frontend
-- **React 18** - Framework JavaScript
+- **React 18** - Interface utilisateur
 - **Material-UI** - Composants UI
-- **React Router** - Routing
+- **React Router** - Navigation
 - **Axios** - Client HTTP
-- **Formik & Yup** - Formulaires et validation
+- **Formik + Yup** - Gestion des formulaires
+- **React Toastify** - Notifications
 
-## 📦 Installation et démarrage
+### Infrastructure
+- **Docker** - Conteneurisation
+- **Docker Compose** - Orchestration
+- **Nginx** - Serveur web et proxy
+- **pgAdmin** - Interface de gestion PostgreSQL
 
-### Option 1: Docker (Recommandé)
+## 📋 Prérequis
 
+- Docker et Docker Compose
+- Node.js 18+ (pour le développement)
+- Python 3.11+ (pour le développement)
+
+## 🚀 Installation et Démarrage
+
+### 1. Cloner le projet
 ```bash
-# Cloner le projet
 git clone <repository-url>
 cd auth
-
-# Démarrer tous les services
-docker-compose up --build
-
-# Ou démarrer avec le frontend en mode développement
-docker-compose --profile dev up --build
 ```
 
-### Option 2: Développement local
-
-#### Backend
+### 2. Démarrer avec Docker Compose
 ```bash
-cd backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+docker-compose up -d
 ```
 
-#### Frontend
-```bash
-cd frontend
-npm install
-npm start
-```
-
-## 🌐 Services disponibles
-
+### 3. Accéder aux services
 - **Frontend** : http://localhost:3000
 - **Backend API** : http://localhost:8000
 - **Documentation API** : http://localhost:8000/docs
-- **pgAdmin** : http://localhost:5050 (admin@admin.com / admin)
+- **pgAdmin** : http://localhost:5050
 
-## 🔐 Authentification
+## 🔐 Comptes par défaut
 
-### Utilisateur admin par défaut
+### Administrateur
 - **Email** : admin@gmail.com
 - **Mot de passe** : admin
 - **Rôle** : admin
 
-### Première connexion
-Lors de la première connexion admin, le système détecte automatiquement l'utilisation du mot de passe par défaut et demande de le changer avec des règles de sécurité strictes.
+### Utilisateur de test
+- **Email** : user@gmail.com
+- **Mot de passe** : 20031125 (format YYYYMMDD)
+- **Rôle** : user
 
-## 📋 Fonctionnalités
+## 📚 API Endpoints
 
-### Backend
-- ✅ Authentification JWT
-- ✅ Gestion des utilisateurs
-- ✅ Gestion des rôles (CRUD)
-- ✅ Changement de mot de passe admin
-- ✅ Validation stricte des mots de passe
-- ✅ Middleware de sécurité
-- ✅ Documentation automatique (Swagger)
+### Authentification
+- `POST /auth/login` - Connexion utilisateur
+- `GET /auth/me` - Informations utilisateur connecté
+- `GET /auth/admin-info` - Informations admin
 
-### Frontend
-- ✅ Interface utilisateur moderne
-- ✅ Authentification sécurisée
-- ✅ Gestion des rôles
-- ✅ Formulaires validés
-- ✅ Notifications toast
-- ✅ Routing protégé
-- ✅ Design responsive
+### Gestion des utilisateurs
+- `GET /admin/users` - Liste des utilisateurs
+- `POST /admin/users` - Créer un utilisateur
+- `PUT /admin/users/{id}` - Modifier un utilisateur
+- `DELETE /admin/users/{id}` - Supprimer un utilisateur
+
+
+### Gestion des rôles
+- `GET /admin/roles` - Liste des rôles
+- `POST /admin/roles` - Créer un rôle
+- `PUT /admin/roles/{id}` - Modifier un rôle
+- `DELETE /admin/roles/{id}` - Supprimer un rôle
+
+### Administration
+
 
 ## 🔧 Configuration
 
 ### Variables d'environnement
 
-#### Backend (.env)
+#### Backend
 ```env
 DATABASE_URL=postgresql+asyncpg://postgrestest:SYS@db:5432/test3
 JWT_SECRET=your_super_secret_key_change_in_production
 ```
 
-#### Frontend (.env)
+#### Frontend
 ```env
 REACT_APP_API_URL=http://localhost:8000
-REACT_APP_ENV=development
+NODE_ENV=production
 ```
-
-## 📁 Structure détaillée
-
-### Backend
-```
-backend/
-├── app/main.py                    # Point d'entrée FastAPI
-├── config/database/
-│   ├── database.py               # Configuration DB
-│   └── init.sql                  # Script d'initialisation
-├── controller/
-│   ├── auth_controller.py        # Contrôleur authentification
-│   ├── main_controller.py        # Contrôleur principal
-│   ├── admin_management_controller.py  # Gestion admin
-│   └── role_management_controller.py   # Gestion rôles
-├── service/
-│   ├── auth_service.py           # Service authentification
-│   ├── admin_management_service.py     # Service admin
-│   └── role_management_service.py      # Service rôles
-├── repository/
-│   ├── user_repository.py        # Repository utilisateurs
-│   └── role_repository.py        # Repository rôles
-├── model/
-│   ├── user.py                   # Modèle utilisateur
-│   └── role.py                   # Modèle rôle
-├── dto/
-│   ├── user_dto.py               # DTO utilisateur
-│   ├── admin_password_dto.py     # DTO mot de passe admin
-│   └── role_dto.py               # DTO rôles
-└── security/
-    └── auth_middleware.py        # Middleware JWT
-```
-
-### Frontend
-```
-frontend/
-├── src/
-│   ├── components/               # Composants réutilisables
-│   ├── pages/                   # Pages de l'application
-│   ├── services/                # Services API
-│   ├── hooks/                   # Hooks personnalisés
-│   ├── utils/                   # Utilitaires
-│   ├── context/                 # Context React
-│   └── styles/                  # Styles CSS
-├── public/                      # Fichiers publics
-├── Dockerfile                   # Docker production
-├── Dockerfile.dev               # Docker développement
-└── nginx.conf                   # Configuration Nginx
-```
-
-## 🛡️ Sécurité
-
-### Backend
-- **JWT** avec expiration (30 minutes)
-- **bcrypt** pour le hachage des mots de passe
-- **Validation stricte** des mots de passe admin
-- **Middleware** de vérification des rôles
-- **CORS** configuré
-- **Headers de sécurité** dans nginx
-
-### Frontend
-- **Stockage sécurisé** des tokens JWT
-- **Validation** des formulaires côté client
-- **Protection des routes** selon les rôles
-- **Gestion des erreurs** centralisée
 
 ## 🧪 Tests
 
@@ -202,45 +167,69 @@ cd frontend
 npm test
 ```
 
-## 📝 API Endpoints
-
-### Authentification
-- `POST /auth/login` - Connexion utilisateur
-- `GET /auth/me` - Informations utilisateur connecté
-
-### Pages protégées
-- `GET /api/home` - Page principale
-
-### Gestion admin
-- `POST /admin/change-admin-default-password` - Changer mot de passe admin
-- `POST /admin/test-password-strength` - Tester force mot de passe
-
-### Gestion des rôles
-- `GET /admin/roles` - Lister tous les rôles
-- `POST /admin/roles` - Créer un nouveau rôle
-- `GET /admin/roles/{id}` - Récupérer un rôle
-- `PUT /admin/roles/{id}` - Modifier un rôle
-- `DELETE /admin/roles/{id}` - Supprimer un rôle
-
-## 🚀 Déploiement
+## 📦 Déploiement
 
 ### Production
 ```bash
-# Build et déploiement
-docker-compose -f docker-compose.prod.yml up --build
+# Build et démarrage en production
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### Développement
 ```bash
-# Mode développement avec hot reload
-docker-compose --profile dev up --build
+# Démarrage avec hot reload
+docker-compose up -d
 ```
 
-## 📊 Monitoring
+## 🔒 Sécurité
 
-- **Health checks** : `/health` sur chaque service
-- **Logs** : Accessibles via `docker-compose logs`
-- **pgAdmin** : Interface web pour la base de données
+### JWT
+- Tokens avec expiration (30 minutes)
+- Refresh automatique
+- Gestion des sessions
+
+### CORS
+- Configuration pour le développement
+- À configurer pour la production
+
+## 🐛 Dépannage
+
+### Problèmes courants
+
+1. **Base de données non accessible**
+   ```bash
+   docker-compose logs db
+   ```
+
+2. **API non accessible**
+   ```bash
+   docker-compose logs backend
+   ```
+
+3. **Frontend non accessible**
+   ```bash
+   docker-compose logs frontend
+   ```
+
+### Logs
+```bash
+# Tous les services
+docker-compose logs
+
+# Service spécifique
+docker-compose logs backend
+docker-compose logs frontend
+docker-compose logs db
+```
+
+## 📝 Changelog
+
+### v1.0.0
+- ✅ Système d'authentification complet
+- ✅ Gestion des utilisateurs et rôles
+- ✅ Interface administrateur
+- ✅ Configuration Docker
+- ✅ Documentation API
 
 ## 🤝 Contribution
 
@@ -252,4 +241,14 @@ docker-compose --profile dev up --build
 
 ## 📄 Licence
 
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails. 
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## 📞 Support
+
+Pour toute question ou problème :
+- Ouvrir une issue sur GitHub
+- Contacter l'équipe de développement
+
+---
+
+**Développé avec ❤️ pour Crystal Assur** 

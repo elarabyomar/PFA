@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database.database import async_session
-from dto.user_dto import UserLoginDTO
-from service.auth_service import get_user_by_email, authenticate_user
-from security.auth_middleware import get_current_active_user
+from dto.user_dto import UserLoginDTO, ChangePasswordDTO
+from service.auth_service import get_user_by_email, authenticate_user, is_default_password, change_password
+from security.auth_middleware import get_current_active_user, require_role
 from passlib.hash import bcrypt
 from jose import jwt
 import os
@@ -44,9 +44,8 @@ async def login(user: UserLoginDTO, session: AsyncSession = Depends(get_session)
                 detail="Email ou mot de passe incorrect"
             )
         
-        # Vérifier si c'est la première connexion admin (mot de passe par défaut)
-        default_password_hash = '$2b$12$CKQs0OA0wWxhglZFzVU/MeXxeTsOGlSlVOeq1ci51n0XPGjGiUPy.'
-        is_first_login = authenticated_user.password == default_password_hash and authenticated_user.role == 'admin'
+        # Vérifier si le mot de passe est la date de naissance (mot de passe par défaut)
+        is_default = is_default_password(authenticated_user, user.password)
         
         # Créer le token d'accès
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -71,16 +70,52 @@ async def login(user: UserLoginDTO, session: AsyncSession = Depends(get_session)
                 "prenom": authenticated_user.prenom,
                 "email": authenticated_user.email,
                 "date_naissance": str(authenticated_user.date_naissance),
-                "role": authenticated_user.role
-            }
+                "role": authenticated_user.role,
+                "password_changed": authenticated_user.password_changed
+            },
+            "requires_password_change": is_default
         }
         
-        # Ajouter un flag si c'est la première connexion admin
-        if is_first_login:
-            response_data["first_admin_login"] = True
-            response_data["security_message"] = "Première connexion admin détectée. Veuillez changer le mot de passe par défaut."
-        
         return response_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur interne du serveur"
+        )
+
+@router.post("/change-password")
+async def change_user_password(
+    password_data: ChangePasswordDTO, 
+    current_user = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """Endpoint pour changer le mot de passe"""
+    try:
+        # Vérifier que les mots de passe correspondent
+        if password_data.new_password != password_data.confirm_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Les mots de passe ne correspondent pas"
+            )
+        
+        # Changer le mot de passe
+        success, message = await change_password(
+            session, 
+            current_user.id, 
+            password_data.current_password, 
+            password_data.new_password
+        )
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=message
+            )
+        
+        return {"message": message}
         
     except HTTPException:
         raise
@@ -99,7 +134,8 @@ async def get_current_user_info(current_user = Depends(get_current_active_user))
         "prenom": current_user.prenom,
         "email": current_user.email,
         "date_naissance": str(current_user.date_naissance),
-        "role": current_user.role
+        "role": current_user.role,
+        "password_changed": current_user.password_changed
     }
 
 @router.get("/admin-info")
@@ -122,7 +158,7 @@ async def get_admin_info(session: AsyncSession = Depends(get_session)):
             "email": admin_user.email,
             "date_naissance": str(admin_user.date_naissance),
             "role": admin_user.role,
-            "has_changed_password": admin_user.password != '$2b$12$CKQs0OA0wWxhglZFzVU/MeXxeTsOGlSlVOeq1ci51n0XPGjGiUPy.'
+            "password_changed": admin_user.password_changed
         }
         
     except HTTPException:
@@ -132,3 +168,7 @@ async def get_admin_info(session: AsyncSession = Depends(get_session)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erreur interne du serveur"
         )
+
+
+
+

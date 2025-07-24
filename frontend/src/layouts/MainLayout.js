@@ -14,6 +14,9 @@ import {
   Menu,
   MenuItem,
   Divider,
+  Alert,
+  Chip,
+  Button,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -23,16 +26,19 @@ import {
   Person as PersonIcon,
   ExitToApp as LogoutIcon,
   AccountCircle as AccountIcon,
+  Group as GroupIcon,
+  Lock as LockIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 
 const drawerWidth = 240;
 
 const MainLayout = ({ children }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-  const { user, logout } = useAuth();
+  const { user, logout, requiresPasswordChange } = useAuth();
   const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
@@ -57,8 +63,17 @@ const MainLayout = ({ children }) => {
     { text: 'Accueil', icon: <HomeIcon />, path: '/home' },
     ...(user?.role === 'admin' ? [
       { text: 'Dashboard Admin', icon: <AdminIcon />, path: '/admin' },
+      { text: 'Gestion des Utilisateurs', icon: <GroupIcon />, path: '/admin/users' },
       { text: 'Gestion des Rôles', icon: <SecurityIcon />, path: '/admin/roles' },
-      { text: 'Changer Mot de Passe', icon: <SecurityIcon />, path: '/admin/password' },
+    ] : []),
+    // Ajouter le lien de changement de mot de passe si nécessaire
+    ...(requiresPasswordChange ? [
+      { 
+        text: 'Changer le mot de passe', 
+        icon: <LockIcon />, 
+        path: '/change-password',
+        highlight: true 
+      }
     ] : []),
   ];
 
@@ -75,6 +90,15 @@ const MainLayout = ({ children }) => {
           <Typography variant="body2" color="text.secondary">
             {user?.role}
           </Typography>
+          {requiresPasswordChange && (
+            <Chip
+              icon={<WarningIcon />}
+              label="Mot de passe à changer"
+              color="warning"
+              size="small"
+              sx={{ mt: 1 }}
+            />
+          )}
         </Box>
       </Box>
       <Divider />
@@ -87,9 +111,20 @@ const MainLayout = ({ children }) => {
               navigate(item.path);
               setDrawerOpen(false);
             }}
+            sx={item.highlight ? {
+              bgcolor: 'warning.light',
+              '&:hover': {
+                bgcolor: 'warning.main',
+              }
+            } : {}}
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
+            <ListItemIcon sx={item.highlight ? { color: 'warning.dark' } : {}}>
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText 
+              primary={item.text} 
+              sx={item.highlight ? { color: 'warning.dark', fontWeight: 'bold' } : {}}
+            />
           </ListItem>
         ))}
       </List>
@@ -150,6 +185,17 @@ const MainLayout = ({ children }) => {
               </ListItemIcon>
               Profil
             </MenuItem>
+            {requiresPasswordChange && (
+              <MenuItem onClick={() => {
+                navigate('/change-password');
+                handleProfileMenuClose();
+              }}>
+                <ListItemIcon>
+                  <LockIcon fontSize="small" />
+                </ListItemIcon>
+                Changer le mot de passe
+              </MenuItem>
+            )}
             <MenuItem onClick={handleLogout}>
               <ListItemIcon>
                 <LogoutIcon fontSize="small" />
@@ -197,6 +243,23 @@ const MainLayout = ({ children }) => {
         }}
       >
         <Toolbar />
+        {requiresPasswordChange && (
+          <Alert 
+            severity="warning" 
+            sx={{ mb: 2 }}
+            action={
+              <Button 
+                color="inherit" 
+                size="small"
+                onClick={() => navigate('/change-password')}
+              >
+                Changer maintenant
+              </Button>
+            }
+          >
+            Votre mot de passe par défaut doit être changé pour des raisons de sécurité.
+          </Alert>
+        )}
         {children}
       </Box>
     </Box>

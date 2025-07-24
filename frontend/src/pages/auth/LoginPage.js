@@ -12,9 +12,9 @@ import {
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
-import { authService } from '../../services/authService';
+import { getAdminInfo } from '../../services/authService';
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -36,7 +36,7 @@ const LoginPage = () => {
   useEffect(() => {
     const checkAdminInfo = async () => {
       try {
-        const info = await authService.getAdminInfo();
+        const info = await getAdminInfo();
         setAdminInfo(info);
       } catch (error) {
         console.error('Erreur lors de la récupération des infos admin:', error);
@@ -58,10 +58,11 @@ const LoginPage = () => {
           () => login(values.email, values.password)
         );
         
-        // Si c'est la première connexion admin, rediriger vers le changement de mot de passe
-        if (response.first_admin_login) {
-          navigate('/admin/password');
+        // Vérifier si un changement de mot de passe est requis
+        if (response.requires_password_change) {
+          navigate('/change-password');
         } else {
+          // Rediriger vers la page d'accueil
           navigate('/home');
         }
       } catch (error) {

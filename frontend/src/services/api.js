@@ -13,11 +13,8 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(JWT_STORAGE_KEY);
-    console.log('Token trouvé:', token ? 'Oui' : 'Non');
-    console.log('URL de la requête:', config.url);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Headers Authorization ajouté');
     }
     return config;
   },

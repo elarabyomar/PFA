@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import jwtDecode from 'jwt-decode';
-import { authService } from '../services/authService';
+import { login as loginService, getCurrentUser } from '../services/authService';
 import { toast } from 'react-toastify';
 import { JWT_STORAGE_KEY } from '../config/api';
 
@@ -13,7 +13,7 @@ const initialState = {
   token: null,
   isAuthenticated: false,
   isLoading: true,
-  isFirstLogin: false,
+  requiresPasswordChange: false,
 };
 
 const authReducer = (state, action) => {
@@ -28,7 +28,7 @@ const authReducer = (state, action) => {
         token: action.payload.token,
         isAuthenticated: true,
         isLoading: false,
-        isFirstLogin: action.payload.isFirstLogin || false,
+        requiresPasswordChange: action.payload.requiresPasswordChange || false,
       };
     
     case 'LOGIN_FAILURE':
@@ -38,7 +38,7 @@ const authReducer = (state, action) => {
         token: null,
         isAuthenticated: false,
         isLoading: false,
-        isFirstLogin: false,
+        requiresPasswordChange: false,
       };
     
     case 'LOGOUT':
@@ -48,13 +48,23 @@ const authReducer = (state, action) => {
         token: null,
         isAuthenticated: false,
         isLoading: false,
-        isFirstLogin: false,
+        requiresPasswordChange: false,
       };
     
     case 'UPDATE_USER':
       return {
         ...state,
         user: action.payload,
+      };
+    
+    case 'PASSWORD_CHANGED':
+      return {
+        ...state,
+        requiresPasswordChange: false,
+        user: {
+          ...state.user,
+          password_changed: true,
+        },
       };
     
     case 'SET_LOADING':
@@ -83,13 +93,13 @@ export const AuthProvider = ({ children }) => {
           
           if (decoded.exp > currentTime) {
             // Token valide, récupérer les infos utilisateur
-            const userInfo = await authService.getCurrentUser();
+            const userInfo = await getCurrentUser();
             dispatch({
               type: 'LOGIN_SUCCESS',
               payload: {
                 user: userInfo,
                 token,
-                isFirstLogin: false,
+                requiresPasswordChange: false,
               },
             });
           } else {
@@ -114,7 +124,7 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: 'LOGIN_START' });
       
-      const response = await authService.login(email, password);
+      const response = await loginService({ email, password });
       
       localStorage.setItem(JWT_STORAGE_KEY, response.access_token);
       
@@ -123,13 +133,11 @@ export const AuthProvider = ({ children }) => {
         payload: {
           user: response.user,
           token: response.access_token,
-          isFirstLogin: response.first_admin_login || false,
+          requiresPasswordChange: response.requires_password_change || false,
         },
       });
 
-      if (response.first_admin_login) {
-        toast.warning('Première connexion admin détectée. Veuillez changer le mot de passe par défaut.');
-      } else {
+      if (!response.requires_password_change) {
         toast.success('Connexion réussie !');
       }
 
@@ -153,11 +161,16 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
+  const passwordChanged = () => {
+    dispatch({ type: 'PASSWORD_CHANGED' });
+  };
+
   const value = {
     ...state,
     login,
     logout,
     updateUser,
+    passwordChanged,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -15,9 +15,10 @@ import {
   Security as SecurityIcon,
   People as PeopleIcon,
   Settings as SettingsIcon,
+  Group as GroupIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../context/AuthContext';
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -25,19 +26,20 @@ const DashboardPage = () => {
 
   const adminFeatures = [
     {
+      title: 'Gestion des Utilisateurs',
+      description: 'Créer, modifier et gérer les utilisateurs du système',
+      icon: <GroupIcon sx={{ fontSize: 40 }} />,
+      color: 'success',
+      path: '/admin/users',
+    },
+    {
       title: 'Gestion des Rôles',
       description: 'Créer, modifier et supprimer les rôles utilisateurs',
       icon: <SecurityIcon sx={{ fontSize: 40 }} />,
       color: 'primary',
       path: '/admin/roles',
     },
-    {
-      title: 'Changer Mot de Passe Admin',
-      description: 'Modifier le mot de passe administrateur avec sécurité renforcée',
-      icon: <SettingsIcon sx={{ fontSize: 40 }} />,
-      color: 'warning',
-      path: '/admin/password',
-    },
+
   ];
 
   return (
@@ -47,7 +49,7 @@ const DashboardPage = () => {
       </Typography>
       
       <Typography variant="body1" color="text.secondary" paragraph>
-        Bienvenue dans l&apos;interface d&apos;administration. Gérez les courtiers et les paramètres de Crystal Assur.
+        Bienvenue dans l&apos;interface d&apos;administration. Gérez les utilisateurs, les rôles et les paramètres de Crystal Assur.
       </Typography>
 
       <Grid container spacing={3}>
@@ -75,6 +77,12 @@ const DashboardPage = () => {
                 <Chip
                   label="Super Admin"
                   color="error"
+                  size="small"
+                  sx={{ mr: 1 }}
+                />
+                <Chip
+                  label="Gestion Utilisateurs"
+                  color="success"
                   size="small"
                   sx={{ mr: 1 }}
                 />

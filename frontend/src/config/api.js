@@ -21,12 +21,16 @@ export const API_ENDPOINTS = {
   HOME: '/api/home',
   
   // Gestion admin
-  CHANGE_ADMIN_PASSWORD: '/admin/change-admin-default-password',
-  TEST_PASSWORD_STRENGTH: '/admin/test-password-strength',
+
   
   // Gestion des rôles
   ROLES: '/admin/roles',
   ROLE_BY_ID: (id) => `/admin/roles/${id}`,
+  
+  // Gestion des utilisateurs
+  USERS: '/admin/users',
+  USER_BY_ID: (id) => `/admin/users/${id}`,
+
 };
 
 // Codes de statut HTTP

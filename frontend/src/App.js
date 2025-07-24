@@ -8,25 +8,37 @@ import AuthLayout from './layouts/AuthLayout';
 
 // Pages
 import LoginPage from './pages/auth/LoginPage';
+import ChangePasswordPage from './pages/auth/ChangePasswordPage';
 import HomePage from './pages/main/HomePage';
 import DashboardPage from './pages/admin/DashboardPage';
 import RoleManagementPage from './pages/admin/RoleManagementPage';
-import AdminPasswordPage from './pages/admin/AdminPasswordPage';
+import UserManagementPage from './pages/admin/UserManagementPage';
 
-// Components
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
+import PasswordChangeRoute from './components/auth/PasswordChangeRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
 // Hooks
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './context/AuthContext';
 
 function App() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, requiresPasswordChange } = useAuth();
 
   if (isLoading) {
     return <LoadingSpinner />;
   }
+
+  // Fonction pour déterminer la redirection par défaut
+  const getDefaultRedirect = () => {
+    if (!isAuthenticated) return '/login';
+    
+    // Si un changement de mot de passe est requis, rediriger vers cette page
+    if (requiresPasswordChange) return '/change-password';
+    
+    // Redirection normale selon le rôle
+    return '/home';
+  };
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
@@ -36,12 +48,22 @@ function App() {
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate to="/home" replace />
+              <Navigate to={getDefaultRedirect()} replace />
             ) : (
               <AuthLayout>
                 <LoginPage />
               </AuthLayout>
             )
+          }
+        />
+
+        {/* Route de changement de mot de passe */}
+        <Route
+          path="/change-password"
+          element={
+            <PasswordChangeRoute>
+              <ChangePasswordPage />
+            </PasswordChangeRoute>
           }
         />
 
@@ -81,11 +103,11 @@ function App() {
         />
 
         <Route
-          path="/admin/password"
+          path="/admin/users"
           element={
             <AdminRoute>
               <MainLayout>
-                <AdminPasswordPage />
+                <UserManagementPage />
               </MainLayout>
             </AdminRoute>
           }
@@ -94,13 +116,13 @@ function App() {
         {/* Route par défaut */}
         <Route
           path="/"
-          element={<Navigate to={isAuthenticated ? '/home' : '/login'} replace />}
+          element={<Navigate to={getDefaultRedirect()} replace />}
         />
 
         {/* Route 404 */}
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? '/home' : '/login'} replace />}
+          element={<Navigate to={getDefaultRedirect()} replace />}
         />
       </Routes>
     </Box>
