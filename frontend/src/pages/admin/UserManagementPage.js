@@ -210,18 +210,13 @@ const UserManagementPage = () => {
 
   const handleConfirmResetPassword = async () => {
     try {
-      const result = await execute(
+      await execute(
         () => userService.resetUserPassword(selectedUser.id),
         'Mot de passe réinitialisé avec succès !'
       );
       setResetPasswordDialogOpen(false);
       setSelectedUser(null);
       loadUsers();
-      
-      // Afficher le nouveau mot de passe
-      if (result.message) {
-        alert(result.message);
-      }
     } catch (error) {
       // L'erreur est déjà gérée par useApi
     }

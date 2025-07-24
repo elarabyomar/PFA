@@ -146,6 +146,6 @@ async def reset_user_password(session: AsyncSession, user_id: int) -> tuple[bool
     
     await user_repo.update_user(user_id, update_data)
     
-    return True, f"Mot de passe réinitialisé avec succès. Le nouveau mot de passe est : {new_password}"
+    return True, "Mot de passe réinitialisé avec succès"
 
  

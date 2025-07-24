@@ -45,7 +45,8 @@ async def login(user: UserLoginDTO, session: AsyncSession = Depends(get_session)
             )
         
         # Vérifier si le mot de passe est la date de naissance (mot de passe par défaut)
-        is_default = is_default_password(authenticated_user, user.password)
+        # Mais seulement si l'utilisateur n'a pas encore changé son mot de passe
+        is_default = not authenticated_user.password_changed and is_default_password(authenticated_user, user.password)
         
         # Créer le token d'accès
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

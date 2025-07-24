@@ -19,7 +19,8 @@ async def authenticate_user(session: AsyncSession, email: str, password: str):
         return None
     
     # Vérifier d'abord si c'est un mot de passe par défaut
-    if is_default_password(user, password):
+    # Mais seulement si l'utilisateur n'a pas encore changé son mot de passe
+    if not user.password_changed and is_default_password(user, password):
         return user
     
     # Sinon, vérifier avec bcrypt
