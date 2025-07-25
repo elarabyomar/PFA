@@ -174,10 +174,10 @@ const ChangePasswordPage = () => {
         {/* Titre et description */}
         <Box textAlign="center" mb={4}>
           <Typography variant="h3" component="h1" gutterBottom>
-            Changer le Mot de Passe Admin
+            Changer le Mot de Passe
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Modifiez le mot de passe admin par défaut pour des raisons de sécurité.
+            Modifiez votre mot de passe pour des raisons de sécurité.
           </Typography>
         </Box>
 
@@ -192,7 +192,7 @@ const ChangePasswordPage = () => {
                     Sécurité du Compte
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Règles strictes pour le mot de passe admin
+                    Règles strictes pour votre mot de passe
                   </Typography>
                 </Box>
               </Box>
@@ -319,6 +319,17 @@ const ChangePasswordPage = () => {
                   sx={{ mt: 3 }}
                 >
                   {loading ? 'Changement en cours...' : 'Changer le mot de passe'}
+                </Button>
+
+                {/* Bouton de retour */}
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="large"
+                  onClick={() => navigate('/home')}
+                  sx={{ mt: 2 }}
+                >
+                  Retour à l&apos;accueil
                 </Button>
               </Box>
             </Paper>

@@ -185,17 +185,15 @@ const MainLayout = ({ children }) => {
               </ListItemIcon>
               Profil
             </MenuItem>
-            {requiresPasswordChange && (
-              <MenuItem onClick={() => {
-                navigate('/change-password');
-                handleProfileMenuClose();
-              }}>
-                <ListItemIcon>
-                  <LockIcon fontSize="small" />
-                </ListItemIcon>
-                Changer le mot de passe
-              </MenuItem>
-            )}
+            <MenuItem onClick={() => {
+              navigate('/change-password');
+              handleProfileMenuClose();
+            }}>
+              <ListItemIcon>
+                <LockIcon fontSize="small" />
+              </ListItemIcon>
+              Changer le mot de passe
+            </MenuItem>
             <MenuItem onClick={handleLogout}>
               <ListItemIcon>
                 <LogoutIcon fontSize="small" />
