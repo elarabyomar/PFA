@@ -14,7 +14,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
-import { getAdminInfo } from '../../services/authService';
+
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -27,24 +27,12 @@ const validationSchema = Yup.object({
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [adminInfo, setAdminInfo] = useState(null);
+
   const { login } = useAuth();
   const { execute, loading, error } = useApi();
   const navigate = useNavigate();
 
-  // Vérifier les informations de l'admin au chargement
-  useEffect(() => {
-    const checkAdminInfo = async () => {
-      try {
-        const info = await getAdminInfo();
-        setAdminInfo(info);
-      } catch (error) {
-        console.error('Erreur lors de la récupération des infos admin:', error);
-      }
-    };
-    
-    checkAdminInfo();
-  }, []);
+
 
   const formik = useFormik({
     initialValues: {

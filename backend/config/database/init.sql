@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR NOT NULL,
     date_naissance DATE NOT NULL,
     role VARCHAR NOT NULL,
-    roles VARCHAR,
     password_changed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
@@ -15,14 +14,13 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Insérer l'utilisateur admin par défaut avec mot de passe "admin" (hashé avec bcrypt)
 -- Note: Les mots de passe par défaut sont "admin" ou la date de naissance au format YYYYMMDD (ex: 20031125)
-INSERT INTO users (nom, prenom, email, password, date_naissance, role, roles, password_changed, created_at, updated_at) 
+INSERT INTO users (nom, prenom, email, password, date_naissance, role, password_changed, created_at, updated_at) 
 VALUES (
     'admin', 
     'admin', 
     'admin@gmail.com', 
     '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8mO',  -- Hash bcrypt pour "admin"
     '2003-11-25',
-    'admin',
     'admin',
     FALSE,
     NOW(),
@@ -52,6 +50,9 @@ ON CONFLICT (name) DO NOTHING;
 -- Migration pour ajouter le champ password_changed aux tables existantes
 -- (pour les installations existantes)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed BOOLEAN DEFAULT FALSE;
+
+-- Supprimer la colonne roles si elle existe (migration)
+ALTER TABLE users DROP COLUMN IF EXISTS roles;
 
 -- Mettre à jour les utilisateurs existants
 -- Marquer tous les utilisateurs comme ayant changé leur mot de passe (sauf admin)

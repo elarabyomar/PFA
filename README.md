@@ -119,7 +119,7 @@ docker-compose up -d
 ### Authentification
 - `POST /auth/login` - Connexion utilisateur
 - `GET /auth/me` - Informations utilisateur connecté
-- `GET /auth/admin-info` - Informations admin
+
 
 ### Gestion des utilisateurs
 - `GET /admin/users` - Liste des utilisateurs

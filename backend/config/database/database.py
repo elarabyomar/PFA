@@ -21,9 +21,5 @@ async def get_session() -> AsyncSession:
 async def test_connection():
     async with async_session() as session:
         result = await session.execute(text("SELECT 1"))
-        print(result.scalar())                  
-        # Should print 1 if the connection is successful    
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(test_connection())
+        return result.scalar()
 

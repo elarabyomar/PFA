@@ -27,11 +27,10 @@ async def create_user(session: AsyncSession, user_data: UserCreateDTO) -> UserRe
     if await user_repo.user_exists(user_data.email):
         raise ValueError("Un utilisateur avec cet email existe déjà")
     
-    # Vérifier que tous les rôles existent
-    for role_name in user_data.roles:
-        role = await role_repo.get_role_by_name(role_name)
-        if not role:
-            raise ValueError(f"Le rôle '{role_name}' n'existe pas")
+    # Vérifier que le rôle existe
+    role = await role_repo.get_role_by_name(user_data.role)
+    if not role:
+        raise ValueError(f"Le rôle '{user_data.role}' n'existe pas")
     
     # Générer le mot de passe si aucun n'est fourni
     if not user_data.password:
@@ -44,8 +43,6 @@ async def create_user(session: AsyncSession, user_data: UserCreateDTO) -> UserRe
     # Préparer les données utilisateur
     user_dict = user_data.dict()
     user_dict["password"] = hashed_password
-    user_dict["role"] = user_data.roles[0] if user_data.roles else "user"  # Premier rôle comme rôle principal
-    user_dict["roles"] = ",".join(user_data.roles)  # Rôles multiples séparés par des virgules
     user_dict["created_at"] = datetime.utcnow()
     user_dict["updated_at"] = datetime.utcnow()
     user_dict["password_changed"] = False  # L'utilisateur devra changer son mot de passe
@@ -89,16 +86,12 @@ async def update_user(session: AsyncSession, user_id: int, user_data: UserUpdate
     update_data = user_data.dict(exclude_unset=True)
     update_data["updated_at"] = datetime.utcnow()
     
-    # Gérer les rôles si modifiés
-    if "roles" in update_data and update_data["roles"]:
-        # Vérifier que tous les rôles existent
-        for role_name in update_data["roles"]:
-            role = await role_repo.get_role_by_name(role_name)
-            if not role:
-                raise ValueError(f"Le rôle '{role_name}' n'existe pas")
-        
-        update_data["role"] = update_data["roles"][0]  # Premier rôle comme rôle principal
-        update_data["roles"] = ",".join(update_data["roles"])  # Convertir en chaîne
+    # Gérer le rôle si modifié
+    if "role" in update_data and update_data["role"]:
+        # Vérifier que le rôle existe
+        role = await role_repo.get_role_by_name(update_data["role"])
+        if not role:
+            raise ValueError(f"Le rôle '{update_data['role']}' n'existe pas")
     
     # Mettre à jour l'utilisateur
     updated_user = await user_repo.update_user(user_id, update_data)

@@ -21,7 +21,4 @@ export const changePassword = async (passwordData) => {
   return response.data;
 };
 
-export const getAdminInfo = async () => {
-  const response = await api.get('/auth/admin-info');
-  return response.data;
-}; 
+ 

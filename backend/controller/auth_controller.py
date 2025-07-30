@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database.database import async_session
 from dto.user_dto import UserLoginDTO, ChangePasswordDTO
-from service.auth_service import get_user_by_email, authenticate_user, is_default_password, change_password
+from service.auth_service import authenticate_user, is_default_password, change_password
 from security.auth_middleware import get_current_active_user, require_role
 from passlib.hash import bcrypt
 from jose import jwt
@@ -138,38 +138,4 @@ async def get_current_user_info(current_user = Depends(get_current_active_user))
         "role": current_user.role,
         "password_changed": current_user.password_changed
     }
-
-@router.get("/admin-info")
-async def get_admin_info(session: AsyncSession = Depends(get_session)):
-    """Récupère les informations de l'admin (sans le mot de passe)"""
-    try:
-        # Récupérer l'utilisateur admin
-        admin_user = await get_user_by_email(session, "admin@gmail.com")
-        
-        if not admin_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Utilisateur admin non trouvé"
-            )
-        
-        return {
-            "id": admin_user.id,
-            "nom": admin_user.nom,
-            "prenom": admin_user.prenom,
-            "email": admin_user.email,
-            "date_naissance": str(admin_user.date_naissance),
-            "role": admin_user.role,
-            "password_changed": admin_user.password_changed
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erreur interne du serveur"
-        )
-
-
-
 

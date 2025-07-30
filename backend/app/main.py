@@ -47,6 +47,7 @@ def root():
         "endpoints": {
             "login": "/auth/login",
             "me": "/auth/me",
+
             "home": "/api/home",
 
             "create_role": "/admin/roles",
@@ -59,6 +60,7 @@ def root():
             "get_user": "/admin/users/{user_id}",
             "update_user": "/admin/users/{user_id}",
             "delete_user": "/admin/users/{user_id}",
+            "reset_password": "/admin/users/{user_id}/reset-password",
 
             "docs": "/docs"
         },

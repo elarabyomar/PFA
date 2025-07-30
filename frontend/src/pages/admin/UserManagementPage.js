@@ -22,8 +22,6 @@ import {
   Select,
   MenuItem,
   OutlinedInput,
-  Checkbox,
-  ListItemText,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -54,9 +52,8 @@ const validationSchema = Yup.object({
   date_naissance: Yup.date()
     .required('Date de naissance requise')
     .max(new Date(), 'La date de naissance ne peut pas être dans le futur'),
-  roles: Yup.array()
-    .min(1, 'Au moins un rôle doit être sélectionné')
-    .required('Rôles requis'),
+  role: Yup.string()
+    .required('Rôle requis'),
 });
 
 const UserManagementPage = () => {
@@ -101,7 +98,7 @@ const UserManagementPage = () => {
       prenom: '',
       email: '',
       date_naissance: '',
-      roles: [],
+      role: '',
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -128,7 +125,7 @@ const UserManagementPage = () => {
       prenom: '',
       email: '',
       date_naissance: '',
-      roles: [],
+      role: '',
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -163,7 +160,7 @@ const UserManagementPage = () => {
       prenom: user.prenom,
       email: user.email,
       date_naissance: user.date_naissance,
-      roles: user.roles ? user.roles.split(',').map(r => r.trim()) : [],
+      role: user.role || '',
     });
     setEditModalOpen(true);
   };
@@ -222,9 +219,9 @@ const UserManagementPage = () => {
     }
   };
 
-  const formatRoles = (rolesString) => {
-    if (!rolesString) return 'Aucun rôle';
-    return rolesString.split(',').map(role => role.trim()).join(', ');
+  const formatRole = (role) => {
+    if (!role) return 'Aucun rôle';
+    return role;
   };
 
   return (
@@ -283,7 +280,7 @@ const UserManagementPage = () => {
                   </Typography>
                   
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    <strong>Rôles:</strong> {formatRoles(user.roles)}
+                    <strong>Rôle:</strong> {formatRole(user.role)}
                   </Typography>
                   
                   <Typography variant="caption" color="text.secondary" display="block" mb={2}>
@@ -389,23 +386,20 @@ const UserManagementPage = () => {
             />
             
             <FormControl fullWidth margin="normal">
-              <InputLabel id="roles-label">Rôles</InputLabel>
+              <InputLabel id="role-label">Rôle</InputLabel>
               <Select
-                labelId="roles-label"
-                id="roles"
-                name="roles"
-                multiple
-                value={formik.values.roles}
+                labelId="role-label"
+                id="role"
+                name="role"
+                value={formik.values.role}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                error={formik.touched.roles && Boolean(formik.errors.roles)}
-                input={<OutlinedInput label="Rôles" />}
-                renderValue={(selected) => selected.join(', ')}
+                error={formik.touched.role && Boolean(formik.errors.role)}
+                input={<OutlinedInput label="Rôle" />}
               >
                 {roles.map((role) => (
                   <MenuItem key={role.id} value={role.name}>
-                    <Checkbox checked={formik.values.roles.indexOf(role.name) > -1} />
-                    <ListItemText primary={role.name} />
+                    {role.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -486,23 +480,20 @@ const UserManagementPage = () => {
             />
             
             <FormControl fullWidth margin="normal">
-              <InputLabel id="edit-roles-label">Rôles</InputLabel>
+              <InputLabel id="edit-role-label">Rôle</InputLabel>
               <Select
-                labelId="edit-roles-label"
-                id="edit-roles"
-                name="roles"
-                multiple
-                value={editFormik.values.roles}
+                labelId="edit-role-label"
+                id="edit-role"
+                name="role"
+                value={editFormik.values.role}
                 onChange={editFormik.handleChange}
                 onBlur={editFormik.handleBlur}
-                error={editFormik.touched.roles && Boolean(editFormik.errors.roles)}
-                input={<OutlinedInput label="Rôles" />}
-                renderValue={(selected) => selected.join(', ')}
+                error={editFormik.touched.role && Boolean(editFormik.errors.role)}
+                input={<OutlinedInput label="Rôle" />}
               >
                 {roles.map((role) => (
                   <MenuItem key={role.id} value={role.name}>
-                    <Checkbox checked={editFormik.values.roles.indexOf(role.name) > -1} />
-                    <ListItemText primary={role.name} />
+                    {role.name}
                   </MenuItem>
                 ))}
               </Select>

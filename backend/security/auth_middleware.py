@@ -43,7 +43,6 @@ async def get_current_user(
     
     # Récupérer l'utilisateur depuis la base de données
     user = await get_user_by_email(session, email)
-    print(f"DEBUG: Utilisateur récupéré depuis la DB: {user.email if user else 'None'}, Rôle: {user.role if user else 'None'}")
     if user is None:
         raise credentials_exception
     
@@ -61,9 +60,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 def require_role(required_role: str):
     """Décorateur pour vérifier le rôle de l'utilisateur"""
     async def role_checker(current_user: User = Depends(get_current_active_user)):
-        print(f"DEBUG: Utilisateur connecté: {current_user.email}, Rôle: {current_user.role}, Rôle requis: {required_role}")
         if current_user.role != required_role:
-            print(f"DEBUG: Rôle incorrect. Utilisateur: {current_user.role}, Requis: {required_role}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Permissions insuffisantes"

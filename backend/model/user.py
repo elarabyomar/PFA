@@ -12,8 +12,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     date_naissance = Column(Date, nullable=False)
-    role = Column(String, nullable=False)  # Gardé pour compatibilité
-    roles = Column(String, nullable=True)  # Nouveau champ pour rôles multiples (séparés par virgules)
+    role = Column(String, nullable=False)  # Rôle de l'utilisateur
     password_changed = Column(Boolean, default=False)  # Nouveau champ pour suivre si le mot de passe a été changé
     created_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, nullable=True)
