@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from config.database.database import async_session
+from config.database.database import get_session
 from dto.user_dto import UserLoginDTO, ChangePasswordDTO
 from service.auth_service import authenticate_user, is_default_password, change_password
 from security.auth_middleware import get_current_active_user, require_role
@@ -14,10 +14,6 @@ router = APIRouter()
 SECRET_KEY = os.getenv("JWT_SECRET", "your_secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-async def get_session():
-    async with async_session() as session:
-        yield session
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     """Crée un token JWT avec expiration"""

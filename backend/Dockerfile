@@ -13,5 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copier tout le code de l'application
 COPY . .
 
-# Démarrer FastAPI avec uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Rendre le script de démarrage exécutable
+RUN chmod +x scripts/startup.sh
+
+# Utiliser le script de démarrage
+CMD ["./scripts/startup.sh"]

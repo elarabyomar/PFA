@@ -13,7 +13,6 @@ import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
-import { useApi } from '../../hooks/useApi';
 
 
 const validationSchema = Yup.object({
@@ -29,8 +28,9 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const { login } = useAuth();
-  const { execute, loading, error } = useApi();
   const navigate = useNavigate();
+
+
 
 
 
@@ -40,11 +40,9 @@ const LoginPage = () => {
       password: '',
     },
     validationSchema,
-    onSubmit: async (values) => {
+    onSubmit: async (values, { setSubmitting }) => {
       try {
-        const response = await execute(
-          () => login(values.email, values.password)
-        );
+        const response = await login(values.email, values.password);
         
         // Vérifier si un changement de mot de passe est requis
         if (response.requires_password_change) {
@@ -54,7 +52,8 @@ const LoginPage = () => {
           navigate('/home');
         }
       } catch (error) {
-        // L'erreur est déjà gérée par useApi
+        console.error('Erreur de connexion:', error);
+        setSubmitting(false);
       }
     },
   });
@@ -64,12 +63,12 @@ const LoginPage = () => {
   };
 
   return (
-    <Box component="form" onSubmit={formik.handleSubmit} sx={{ width: '100%' }}>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+    <Box 
+      component="form" 
+      onSubmit={formik.handleSubmit}
+      sx={{ width: '100%' }}
+    >
+
 
       <TextField
         fullWidth
@@ -128,11 +127,13 @@ const LoginPage = () => {
         fullWidth
         variant="contained"
         size="large"
-        disabled={loading}
+        disabled={formik.isSubmitting}
         sx={{ mt: 3, mb: 2 }}
       >
-        {loading ? 'Connexion...' : 'Se connecter'}
+        {formik.isSubmitting ? 'Connexion...' : 'Se connecter'}
       </Button>
+
+
 
       <Typography variant="body2" color="text.secondary" textAlign="center">
         Utilisez vos identifiants pour accéder à Crystal Assur

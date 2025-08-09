@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
-from config.database.database import async_session
+from config.database.database import get_session
 from model.user import User
 from service.auth_service import get_user_by_email
 import os
@@ -13,10 +13,6 @@ ALGORITHM = "HS256"
 
 # Schéma de sécurité HTTP Bearer
 security = HTTPBearer()
-
-async def get_session():
-    async with async_session() as session:
-        yield session
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),

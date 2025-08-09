@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import jwtDecode from 'jwt-decode';
 import { login as loginService, getCurrentUser } from '../services/authService';
-import { toast } from 'react-toastify';
+
 import { JWT_STORAGE_KEY } from '../config/api';
 
 const AuthContext = createContext();
@@ -137,9 +137,7 @@ export const AuthProvider = ({ children }) => {
         },
       });
 
-      if (!response.requires_password_change) {
-        toast.success('Connexion réussie !');
-      }
+
 
       return response;
     } catch (error) {
@@ -151,7 +149,6 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem(JWT_STORAGE_KEY);
     dispatch({ type: 'LOGOUT' });
-    toast.info('Déconnexion réussie');
   };
 
   const updateUser = (userData) => {

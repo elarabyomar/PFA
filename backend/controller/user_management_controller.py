@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from config.database.database import async_session
+from config.database.database import get_session
 from dto.user_dto import UserCreateDTO, UserUpdateDTO, UserResponseDTO
 from service.user_management_service import (
     create_user, 
@@ -14,10 +14,6 @@ from security.auth_middleware import get_current_active_user, require_role
 from typing import List
 
 router = APIRouter()
-
-async def get_session():
-    async with async_session() as session:
-        yield session
 
 @router.post("/users", response_model=UserResponseDTO)
 async def create_new_user(
