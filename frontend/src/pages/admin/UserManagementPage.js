@@ -241,7 +241,7 @@ const UserManagementPage = () => {
       </Box>
 
       <Typography variant="body1" color="text.secondary" paragraph>
-        Gérez les utilisateurs de Crystal Assur. Les mots de passe sont générés automatiquement à partir de la date de naissance.
+        Gérez les utilisateurs d'Insurforce. Les mots de passe sont générés automatiquement à partir de la date de naissance.
       </Typography>
 
       {error && (

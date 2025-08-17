@@ -29,6 +29,7 @@ import {
   Group as GroupIcon,
   Lock as LockIcon,
   Warning as WarningIcon,
+  Storage as DatabaseIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -65,6 +66,7 @@ const MainLayout = ({ children }) => {
       { text: 'Dashboard Admin', icon: <AdminIcon />, path: '/admin' },
       { text: 'Gestion des Utilisateurs', icon: <GroupIcon />, path: '/admin/users' },
       { text: 'Gestion des Rôles', icon: <SecurityIcon />, path: '/admin/roles' },
+      { text: 'Explorateur Base de Données', icon: <DatabaseIcon />, path: '/admin/database' },
     ] : []),
     // Ajouter le lien de changement de mot de passe si nécessaire
     ...(requiresPasswordChange ? [
@@ -151,7 +153,7 @@ const MainLayout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Crystal Assur
+            Insurforce
           </Typography>
           <IconButton
             size="large"

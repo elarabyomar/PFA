@@ -100,7 +100,7 @@ const RoleManagementPage = () => {
       </Box>
 
       <Typography variant="body1" color="text.secondary" paragraph>
-        Gérez les rôles utilisateurs et leurs permissions dans Crystal Assur.
+        Gérez les rôles utilisateurs et leurs permissions dans Insurforce.
       </Typography>
 
       {error && (

@@ -15,6 +15,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import requests; requests.get('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
     networks:
       - auth-network
 
@@ -27,7 +33,7 @@ services:
       - ./frontend/nginx.conf:/etc/nginx/nginx.conf
     environment:
       - NODE_ENV=production
-      - REACT_APP_API_URL=http://backend:8000
+      - REACT_APP_API_URL=http://localhost:8000
     depends_on:
       - backend
     networks:

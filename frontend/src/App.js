@@ -13,6 +13,7 @@ import HomePage from './pages/main/HomePage';
 import DashboardPage from './pages/admin/DashboardPage';
 import RoleManagementPage from './pages/admin/RoleManagementPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
+import DatabaseExplorerPage from './pages/admin/DatabaseExplorerPage';
 
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
@@ -108,6 +109,17 @@ function App() {
             <AdminRoute>
               <MainLayout>
                 <UserManagementPage />
+              </MainLayout>
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/database"
+          element={
+            <AdminRoute>
+              <MainLayout>
+                <DatabaseExplorerPage />
               </MainLayout>
             </AdminRoute>
           }

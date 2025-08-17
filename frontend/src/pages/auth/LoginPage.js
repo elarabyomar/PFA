@@ -136,7 +136,7 @@ const LoginPage = () => {
 
 
       <Typography variant="body2" color="text.secondary" textAlign="center">
-        Utilisez vos identifiants pour accéder à Crystal Assur
+        Utilisez vos identifiants pour accéder à Insurforce
       </Typography>
     </Box>
   );

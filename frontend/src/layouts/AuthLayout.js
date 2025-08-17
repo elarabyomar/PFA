@@ -35,7 +35,7 @@ const AuthLayout = ({ children }) => {
           >
             <SecurityIcon sx={{ fontSize: 40, color: 'primary.main' }} />
             <Typography variant="h4" component="h1" fontWeight="bold">
-              Crystal Assur
+              Insurforce
             </Typography>
           </Box>
           <Typography variant="body1" color="text.secondary" textAlign="center" mb={3}>

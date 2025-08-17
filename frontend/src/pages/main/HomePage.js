@@ -54,7 +54,7 @@ const HomePage = () => {
       </Typography>
       
       <Typography variant="body1" color="text.secondary" paragraph>
-        Vous êtes connecté à Crystal Assur. Voici vos informations de profil.
+        Vous êtes connecté à Insurforce. Voici vos informations de profil.
       </Typography>
 
       <Grid container spacing={3}>

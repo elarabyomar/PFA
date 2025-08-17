@@ -5,6 +5,7 @@ from controller.main_controller import router as main_router
 from controller.admin_management_controller import router as admin_router
 from controller.role_management_controller import router as role_management_router
 from controller.user_management_controller import router as user_management_router
+from controller.database_explorer_controller import router as database_explorer_router
 
 
 app = FastAPI(
@@ -37,7 +38,15 @@ app.include_router(role_management_router, prefix="/admin", tags=["role-manageme
 # Inclure les routes de gestion des utilisateurs
 app.include_router(user_management_router, prefix="/admin", tags=["user-management"])
 
+# Inclure les routes d'exploration de la base de données
+app.include_router(database_explorer_router, prefix="/admin", tags=["database-explorer"])
 
+
+
+@app.get("/health")
+def health_check():
+    """Endpoint de vérification de santé pour Docker"""
+    return {"status": "healthy", "timestamp": "2025-08-11T19:37:00Z"}
 
 @app.get("/")
 def root():
@@ -61,6 +70,13 @@ def root():
             "update_user": "/admin/users/{user_id}",
             "delete_user": "/admin/users/{user_id}",
             "reset_password": "/admin/users/{user_id}/reset-password",
+
+            "database_explorer": "/admin/tables",
+            "table_structure": "/admin/tables/{table_name}/structure",
+            "table_data": "/admin/tables/{table_name}/data",
+            "create_row": "/admin/tables/{table_name}/rows",
+            "update_row": "/admin/tables/{table_name}/rows/{row_id}",
+            "delete_row": "/admin/tables/{table_name}/rows/{row_id}",
 
             "docs": "/docs"
         },

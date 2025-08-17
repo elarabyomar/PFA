@@ -162,7 +162,7 @@ const ChangePasswordPage = () => {
       <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Crystal Assur
+            Insurforce
           </Typography>
           <Avatar sx={{ bgcolor: 'white', color: 'primary.main' }}>
             <Person />

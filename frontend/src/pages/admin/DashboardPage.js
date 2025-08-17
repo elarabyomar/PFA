@@ -16,6 +16,7 @@ import {
   People as PeopleIcon,
   Settings as SettingsIcon,
   Group as GroupIcon,
+  Storage as DatabaseIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -39,7 +40,13 @@ const DashboardPage = () => {
       color: 'primary',
       path: '/admin/roles',
     },
-
+    {
+      title: 'Explorateur Base de Données',
+      description: 'Explorer la structure et les données de tous les tableaux',
+      icon: <DatabaseIcon sx={{ fontSize: 40 }} />,
+      color: 'info',
+      path: '/admin/database',
+    },
   ];
 
   return (
@@ -49,7 +56,7 @@ const DashboardPage = () => {
       </Typography>
       
       <Typography variant="body1" color="text.secondary" paragraph>
-        Bienvenue dans l&apos;interface d&apos;administration. Gérez les utilisateurs, les rôles et les paramètres de Crystal Assur.
+        Bienvenue dans l&apos;interface d&apos;administration. Gérez les utilisateurs, les rôles et les paramètres d&apos;Insurforce.
       </Typography>
 
       <Grid container spacing={3}>
