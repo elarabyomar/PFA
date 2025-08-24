@@ -1,438 +1,271 @@
 #!/usr/bin/env python3
 """
-Script générique pour créer les tables à partir du fichier CSV
-Exécuté automatiquement lors du premier lancement de Docker
+Script pour créer automatiquement toutes les tables de la base de données
+à partir du fichier CSV DBTABLES.csv
 """
 
-import csv
-import os
+import asyncio
 import sys
-import time
-from pathlib import Path
+import os
+import csv
+from collections import defaultdict
 
-# Ajouter le répertoire backend au path
-backend_path = Path(__file__).parent.parent
-sys.path.append(str(backend_path))
+# Ajouter le répertoire parent au path pour les imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy import create_engine, text
-from config.database.database import DATABASE_URL
+from config.database.database import get_session
+from sqlalchemy import text
 
-# Convertir l'URL async en URL sync pour SQLAlchemy
-def get_sync_database_url():
-    """Convertit l'URL async en URL sync pour SQLAlchemy"""
-    async_url = DATABASE_URL
-    # Remplacer asyncpg par psycopg2 pour les connexions sync
-    sync_url = async_url.replace('postgresql+asyncpg://', 'postgresql://')
-    return sync_url
-
-def wait_for_database():
-    """Attend que la base de données soit disponible"""
-    print("⏳ Attente de la base de données...")
-    
-    max_attempts = 60  # Augmenter le nombre de tentatives
-    attempt = 0
-    
-    while attempt < max_attempts:
-        try:
-            sync_url = get_sync_database_url()
-            print(f"🔍 Tentative de connexion avec : {sync_url}")
-            engine = create_engine(sync_url, echo=False)
-            with engine.connect() as connection:
-                connection.execute(text("SELECT 1"))
-                print("✅ Base de données disponible !")
-                return True
-        except Exception as e:
-            attempt += 1
-            print(f"⏳ Tentative {attempt}/{max_attempts} - Base de données non disponible... (Erreur: {e})")
-            time.sleep(3)  # Augmenter le délai entre les tentatives
-    
-    print("❌ Impossible de se connecter à la base de données")
-    return False
-
-def clean_column_name(column_name):
-    """Nettoie le nom de colonne des caractères invisibles"""
-    if column_name:
-        # Supprimer le BOM et autres caractères invisibles
-        return column_name.strip().replace('\ufeff', '').replace('\u200b', '')
-    return column_name
-
-def read_csv_file():
-    """Lit le fichier CSV et retourne les données des tables"""
-    csv_path = Path(__file__).parent / "DBTABLES.csv"
-    
-    if not csv_path.exists():
-        print(f"❌ Fichier CSV non trouvé : {csv_path}")
-        return None
-    
-    print(f"✅ Fichier CSV trouvé : {csv_path}")
-    
-    tables = {}
+def parse_csv_structure(csv_file_path):
+    """Parse le fichier CSV pour extraire la structure des tables"""
+    tables = defaultdict(list)
     
     try:
-        with open(csv_path, 'r', encoding='utf-8-sig') as file:  # utf-8-sig gère le BOM
+        with open(csv_file_path, 'r', encoding='utf-8-sig') as file:
             reader = csv.DictReader(file)
-            print(f"📋 Colonnes détectées : {list(reader.fieldnames)}")
             
-            for row_num, row in enumerate(reader, 1):
-                # Nettoyer les noms de colonnes
-                table_col = clean_column_name(row.get('Table', ''))
-                colonne_col = clean_column_name(row.get('Colonne', ''))
+            for row in reader:
+                table_name = row['Table'].strip()
+                column_name = row['Colonne'].strip()
                 
-                # Ignorer les lignes vides ou avec des colonnes vides
-                if not table_col or not colonne_col:
-                    print(f"⏭️ Ligne {row_num} ignorée (colonne vide)")
+                # Ignorer les lignes vides
+                if not table_name or not column_name:
                     continue
-                    
-                table_name = table_col.strip()
-                if table_name not in tables:
-                    tables[table_name] = []
                 
-                tables[table_name].append({
-                    'column': colonne_col.strip(),
-                    'description': clean_column_name(row.get('Description', '')).strip(),
-                    'possible_values': clean_column_name(row.get('Valeurs Possibles', '')).strip(),
-                    'primary_key': clean_column_name(row.get('Clé Primaire', '')).strip() == 'TRUE',
-                    'foreign_key': clean_column_name(row.get('Clé Etrangère', '')).strip() == 'TRUE',
-                    'format': clean_column_name(row.get('Format', '')).strip() or 'VARCHAR(255)',
-                    'table_type': clean_column_name(row.get('Type Table', '')).strip() or 'REFERENCE'
-                })
+                column_info = {
+                    'name': column_name,
+                    'display_name': row.get('Libellé Affichage', column_name),  # Utiliser le libellé d'affichage
+                    'description': row.get('Description', ''),
+                    'values_possibles': row.get('Valeurs Possibles', ''),
+                    'primary_key': row.get('Clé Primaire', '').upper() == 'TRUE',
+                    'foreign_key': row.get('Clé Etrangère', '').upper() == 'TRUE',
+                    'format': row.get('Format', ''),
+                    'table_type': row.get('Type Table', 'MASTER')
+                }
                 
-                if row_num % 10 == 0:  # Log tous les 10 lignes
-                    print(f"📝 Traitement ligne {row_num} - Table: {table_name}, Colonne: {row['Colonne'].strip()}")
-        
-        print(f"✅ {len(tables)} tables trouvées dans le CSV")
-        return tables
-        
+                tables[table_name].append(column_info)
+                
+    except FileNotFoundError:
+        print(f"❌ Fichier CSV non trouvé: {csv_file_path}")
+        return {}
     except Exception as e:
-        print(f"❌ Erreur lors de la lecture du CSV : {e}")
-        return None
+        print(f"❌ Erreur lors de la lecture du CSV: {e}")
+        return {}
+    
+    return tables
 
-def convert_format_to_sql_type(format_str: str) -> str:
-    """Convertit le format en type SQL PostgreSQL"""
-    format_mapping = {
-        'SERIAL': 'SERIAL',
-        'INT': 'INTEGER',
-        'VARCHAR(10)': 'VARCHAR(10)',
-        'VARCHAR(20)': 'VARCHAR(20)',
-        'VARCHAR(50)': 'VARCHAR(50)',
-        'VARCHAR(100)': 'VARCHAR(100)',
-        'VARCHAR(255)': 'VARCHAR(255)',
-        'TEXT': 'TEXT',
-        'DATE': 'DATE',
-        'TIMESTAMP': 'TIMESTAMP',
-        'BOOLEAN': 'BOOLEAN',
-        'NUMERIC(15,2)': 'NUMERIC(15,2)',
-        'NUMERIC(12,2)': 'NUMERIC(12,2)',
-        'NUMERIC(10,2)': 'NUMERIC(10,2)',
-        'NUMERIC(5,4)': 'NUMERIC(5,4)',
-        'DECIMAL(12,2)': 'DECIMAL(12,2)',
-        'DECIMAL(4,2)': 'DECIMAL(4,2)'
-    }
+def generate_create_table_sql(table_name, columns):
+    """Génère le SQL CREATE TABLE pour une table donnée"""
+    column_definitions = []
+    primary_keys = []
     
-    return format_mapping.get(format_str, 'VARCHAR(255)')
+    for col in columns:
+        col_name = col['name']
+        col_display_name = col.get('display_name', col_name)  # Utiliser le libellé d'affichage
+        col_format = col['format']
+        col_primary = col['primary_key']
+        col_nullable = not col['primary_key']  # Les clés primaires ne peuvent pas être NULL
+        
+        # Définir le type de données
+        if col_format.upper() == 'SERIAL':
+            data_type = 'SERIAL'
+        elif col_format.upper() == 'INT':
+            data_type = 'INTEGER'
+        elif col_format.upper().startswith('VARCHAR'):
+            data_type = col_format
+        elif col_format.upper().startswith('NUMERIC') or col_format.upper().startswith('DECIMAL'):
+            data_type = col_format
+        elif col_format.upper() == 'DATE':
+            data_type = 'DATE'
+        elif col_format.upper() == 'TIMESTAMP':
+            data_type = 'TIMESTAMP'
+        elif col_format.upper() == 'BOOLEAN':
+            data_type = 'BOOLEAN'
+        elif col_format.upper() == 'TEXT':
+            data_type = 'TEXT'
+        else:
+            # Par défaut, utiliser VARCHAR(255)
+            data_type = 'VARCHAR(255)'
+        
+        # Construire la définition de colonne avec le libellé d'affichage comme commentaire
+        column_def = f"{col_name} {data_type} COMMENT '{col_display_name}'"
+        
+        if not col_nullable:
+            column_def += " NOT NULL"
+        
+        if col_primary:
+            primary_keys.append(col_name)
+        
+        column_definitions.append(column_def)
+    
+    # Ajouter la contrainte de clé primaire si nécessaire
+    if primary_keys:
+        column_definitions.append(f"PRIMARY KEY ({', '.join(primary_keys)})")
+    
+    # Générer le SQL CREATE TABLE
+    separator = ',\n    '
+    sql = f"""CREATE TABLE IF NOT EXISTS {table_name} (
+    {separator.join(column_definitions)}
+) COMMENT 'Table {table_name} avec libellés d''affichage'"""
+    
+    return sql
 
-def get_referenced_table_and_key(column_name: str) -> tuple:
-    """Détermine la table référencée et sa clé primaire"""
-    column_mapping = {
-        # Clés primaires standard (id)
-        'idUser': ('users', 'id'),
-        'idProfile': ('profiles', 'id'),
-        'idProduit': ('produits', 'id'),
-        'idGarantie': ('garanties', 'id'),
-        'idSousGarantie': ('sous_garanties', 'id'),
-        'idBranche': ('branches', 'id'),
-        'idUsage': ('usage', 'id'),
-        'idAvenant': ('avenant', 'id'),
-        'idSousTypeAvenant': ('avenant_soustype', 'id'),
-        'idCIE': ('compagnies', 'id'),
-        'idQuittance': ('quittance', 'id'),
-        'idProduction': ('production', 'id'),
-        'idSinistre': ('sinistre', 'id'),
-        'idCommission': ('commission', 'id'),
-        'idTaxes': ('taxe', 'id'),
-        'idPaiement': ('paiement', 'id'),
-        'idRDV': ('rdv', 'id'),
-        'idDocType': ('document_type', 'id'),
-        'idCommissionType': ('commission_type', 'id'),
-        
-        # Clés primaires personnalisées
-        'idClient': ('clients', 'id'),  # clients a 'id' comme PK
-        'idEntite': ('clients', 'id'),  # clients a 'id' comme PK
-        'societeMere': ('societes', 'idClient'),  # societes a 'idClient' comme PK
-        'idDroit': ('droits', 'id'),  # droits a 'id' comme PK
-        
-        # Références par code (pas par id)
-        'codeGarantie': ('garanties', 'codeGarantie'),  # Référence par code
-        'codeSousGarantie': ('sous_garanties', 'codeSousGarantie'),  # Référence par code
-        'codeBranche': ('branches', 'codeBranche'),  # Référence par code
-        'codeProduit': ('produits', 'codeProduit'),  # Référence par code
-        'codeUsage': ('usage', 'codeUsage'),  # Référence par code
-        'codeAvenant': ('avenant', 'codeAvenant'),  # Référence par code
-        'codeQuittance': ('quittance', 'codeQuittance'),  # Référence par code
-        'codeDocType': ('document_type', 'codeDocType'),  # Référence par code
-    }
+async def create_tables_from_csv():
+    """Crée toutes les tables à partir du fichier CSV"""
     
-    return column_mapping.get(column_name, ('clients', 'id'))
-
-def generate_create_table_sql(table_name: str, columns: list, skip_foreign_keys: bool = False) -> str:
-    """Génère le SQL de création de table"""
+    # Chemin vers le fichier CSV
+    csv_path = os.path.join(os.path.dirname(__file__), 'DBTABLES.csv')
     
-    sql_parts = [f"CREATE TABLE IF NOT EXISTS {table_name} ("]
+    # Parser la structure du CSV
+    print("📖 Lecture du fichier CSV DBTABLES.csv...")
+    tables_structure = parse_csv_structure(csv_path)
     
-    # Identifier les colonnes de clé primaire
-    primary_keys = [col['column'] for col in columns if col['primary_key']]
+    if not tables_structure:
+        print("❌ Aucune table trouvée dans le CSV")
+        return False
     
-    for i, col in enumerate(columns):
-        column_name = col['column']
-        format_str = col['format']
-        is_primary = col['primary_key']
-        is_foreign = col['foreign_key']
-        
-        # Convertir le format en type SQL
-        sql_type = convert_format_to_sql_type(format_str)
-        
-        # Construire la ligne de colonne
-        column_def = f"    {column_name} {sql_type}"
-        
-        # Gérer les clés primaires et étrangères
-        if is_primary and is_foreign:
-            # Clé primaire + étrangère (ex: particuliers.idClient)
-            if len(primary_keys) == 1:
-                column_def += " PRIMARY KEY"
-            if not skip_foreign_keys:
-                referenced_table, primary_key = get_referenced_table_and_key(column_name)
-                column_def += f" REFERENCES {referenced_table}({primary_key})"
-        elif is_primary:
-            # Clé primaire simple
-            if len(primary_keys) == 1:
-                column_def += " PRIMARY KEY"
-            # Sinon, on gère la clé composite à la fin
-        elif is_foreign and not skip_foreign_keys:
-            # Clé étrangère simple
-            referenced_table, primary_key = get_referenced_table_and_key(column_name)
-            column_def += f" REFERENCES {referenced_table}({primary_key})"
-        
-        # Ajouter une virgule si ce n'est pas la dernière colonne OU s'il y a une clé composite
-        if i < len(columns) - 1 or len(primary_keys) > 1:
-            column_def += ","
-        
-        sql_parts.append(column_def)
+    print(f"✅ {len(tables_structure)} tables trouvées dans le CSV")
     
-    # Ajouter la clé primaire composite si nécessaire
-    if len(primary_keys) > 1:
-        sql_parts.append(f"    PRIMARY KEY ({', '.join(primary_keys)})")
-    elif len(primary_keys) == 1:
-        # La clé primaire simple est déjà ajoutée dans la colonne
-        pass
+    # Créer les tables dans l'ordre logique (d'abord les tables de référence)
+    table_order = ['REFERENCE', 'MASTER', 'TRANSACTIONAL', 'LOG']
     
-    sql_parts.append(");")
-    
-    return "\n".join(sql_parts)
-
-def analyze_dependencies(tables):
-    """Analyse les dépendances entre les tables"""
-    dependencies = {}
-    
-    for table_name, columns in tables.items():
-        dependencies[table_name] = set()
-        for col in columns:
-            if col['foreign_key']:
-                referenced_table, _ = get_referenced_table_and_key(col['column'])
-                if referenced_table != table_name:  # Éviter les auto-références
-                    dependencies[table_name].add(referenced_table)
-                    print(f"🔗 {table_name}.{col['column']} → {referenced_table}")
-    
-    return dependencies
-
-def get_creation_order(tables):
-    """Détermine l'ordre de création basé sur les dépendances"""
-    dependencies = analyze_dependencies(tables)
-    created = set()
-    order = []
-    
-    while len(created) < len(tables):
-        for table_name in tables:
-            if table_name not in created:
-                # Vérifier si toutes les dépendances sont créées
-                if dependencies[table_name].issubset(created):
-                    order.append(table_name)
-                    created.add(table_name)
-        
-        # Si aucun progrès, il y a une dépendance circulaire
-        if len(created) == len(order):
-            # Ajouter les tables restantes
-            for table_name in tables:
-                if table_name not in created:
-                    order.append(table_name)
-                    created.add(table_name)
-            break
-    
-    return order
-
-def create_tables(tables):
-    """Crée toutes les tables dans la base de données"""
-    print("📝 Création des tables...")
-    
-    try:
-        sync_url = get_sync_database_url()
-        engine = create_engine(sync_url, echo=False)
-        
-        # Déterminer l'ordre de création automatiquement
-        table_order = get_creation_order(tables)
-        print(f"📋 Ordre de création : {table_order}")
-        
-        # Ordre manuel pour les tables critiques (en cas de problème avec l'ordre automatique)
-        manual_order = [
-            # Tables MASTER (sans dépendances)
-            'compagnies', 'clients', 'particuliers', 'societes', 
-            'users', 'infos', 'avenant', 'quittance', 'document_type',
-            
-            # Tables REFERENCE (sans dépendances)
-            'branches', 'garanties', 'sous_garanties', 'produits',
-            'commission_type', 'commission_taux', 'commission_plage', 'commission_forfait',
-            'taxe', 'usage', 'rdv', 'droits', 'profiles', 'refProfiles',
-            'marques', 'carrosseries', 'villes', 'banques', 'bonus_auto', 'paiement',
-            
-            # Tables avec dépendances
-            'commission', 'documents',
-            
-            # Tables TRANSACTIONAL
-            'devis', 'production', 'sinistre', 'sinistre_vue',
-            'attestation', 'reglement', 'agenda', 'userProfiles', 'avenant_soustype'
-        ]
-        
-        # Filtrer pour ne garder que les tables qui existent
-        table_order = [table for table in manual_order if table in tables]
-        print(f"📋 Ordre de création (manuel) : {table_order}")
-        
-        created_tables = []
-        
-        # Première passe : créer toutes les tables sans clés étrangères
-        print("📝 Première passe : création des tables sans clés étrangères...")
-        for table_name in table_order:
-            if table_name in tables:
-                columns = tables[table_name]
-                print(f"✅ Création de la table : {table_name}")
-                
-                # Générer le SQL de création de table sans clés étrangères
-                create_table_sql = generate_create_table_sql(table_name, columns, skip_foreign_keys=True)
-                
-                # Exécuter la création
-                with engine.connect() as connection:
-                    connection.execute(text(create_table_sql))
-                    connection.commit()
-                
-                created_tables.append(table_name)
-        
-        # Deuxième passe : ajouter les clés étrangères
-        print("📝 Deuxième passe : ajout des clés étrangères...")
-        for table_name in table_order:
-            if table_name in tables:
-                columns = tables[table_name]
-                foreign_keys = [col for col in columns if col['foreign_key']]
-                
-                if foreign_keys:
-                    print(f"🔗 Ajout des clés étrangères pour : {table_name}")
+    async for session in get_session():
+        try:
+            # Créer les tables par ordre de priorité
+            for table_type in table_order:
+                for table_name, columns in tables_structure.items():
+                    # Vérifier le type de table
+                    if not columns or columns[0].get('table_type') != table_type:
+                        continue
                     
-                    for col in foreign_keys:
-                        referenced_table, primary_key = get_referenced_table_and_key(col['column'])
-                        add_fk_sql = f"ALTER TABLE {table_name} ADD CONSTRAINT fk_{table_name}_{col['column']} FOREIGN KEY ({col['column']}) REFERENCES {referenced_table}({primary_key});"
+                    print(f"🔧 Création de la table {table_name} ({table_type})...")
+                    
+                    # Générer le SQL CREATE TABLE
+                    create_sql = generate_create_table_sql(table_name, columns)
+                    
+                    # Exécuter la création
+                    await session.execute(text(create_sql))
+                    print(f"  ✅ Table {table_name} créée")
+            
+            # Créer l'utilisateur admin par défaut
+            print("🔧 Création de l'utilisateur admin...")
+            await session.execute(text("""
+                INSERT INTO users (nom, prenom, email, password, date_naissance, role, password_changed, created_at, updated_at) 
+                VALUES (
+                    'admin', 
+                    'admin', 
+                    'admin@gmail.com', 
+                    'admin',  -- Mot de passe non hashé pour permettre la connexion
+                    '2003-11-25',
+                    'admin',
+                    FALSE,  -- Doit changer son mot de passe
+                    NOW(),
+                    NOW()
+                ) 
+                ON CONFLICT (email) DO UPDATE SET 
+                    password = EXCLUDED.password,
+                    password_changed = EXCLUDED.password_changed
+            """))
+            
+            # Créer des vues pour afficher les libellés d'affichage
+            print("🔧 Création des vues avec libellés d'affichage...")
+            
+            for table_name, columns in tables_structure.items():
+                try:
+                    # Créer une vue qui renomme les colonnes avec leurs libellés d'affichage
+                    view_columns = []
+                    for col in columns:
+                        col_name = col['name']
+                        display_name = col.get('display_name', col_name)
+                        # Remplacer les caractères spéciaux pour le nom de colonne SQL
+                        safe_display_name = display_name.replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '')
+                        view_columns.append(f"{col_name} AS \"{safe_display_name}\"")
+                    
+                    if view_columns:
+                        view_sql = f"""
+                            CREATE OR REPLACE VIEW {table_name}_display AS
+                            SELECT {', '.join(view_columns)}
+                            FROM {table_name}
+                        """
+                        await session.execute(text(view_sql))
+                        print(f"  ✅ Vue {table_name}_display créée")
                         
-                        try:
-                            with engine.connect() as connection:
-                                connection.execute(text(add_fk_sql))
-                                connection.commit()
-                            print(f"  ✅ Ajouté : {col['column']} → {referenced_table}({primary_key})")
-                        except Exception as e:
-                            print(f"  ⚠️ Erreur ajout FK {col['column']}: {e}")
-        
-        print(f"✅ {len(created_tables)} tables créées avec succès !")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erreur lors de la création des tables : {e}")
-        return False
+                except Exception as e:
+                    print(f"  ⚠️ Impossible de créer la vue pour {table_name}: {e}")
+            
+            # Valider tous les changements
+            await session.commit()
+            
+            print("✅ Toutes les tables ont été créées avec succès")
+            print("✅ Vues avec libellés d'affichage créées")
+            print("✅ Utilisateur admin créé (email: admin@gmail.com, mot de passe: admin)")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erreur lors de la création des tables: {e}")
+            await session.rollback()
+            return False
+        finally:
+            await session.close()
 
-def insert_initial_data():
-    """Insère des données initiales dans les tables de référence"""
-    print("📝 Insertion de données initiales...")
-    
-    try:
-        sync_url = get_sync_database_url()
-        engine = create_engine(sync_url, echo=False)
-        
-        # Données initiales
-        initial_data = [
-            # Branches d'assurance
-            ("INSERT INTO branches (codeBranche, libelle) VALUES ('AUTO', 'Assurance Automobile') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO branches (codeBranche, libelle) VALUES ('HAB', 'Assurance Habitation') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO branches (codeBranche, libelle) VALUES ('PRO', 'Assurance Professionnelle') ON CONFLICT DO NOTHING;"),
+async def show_table_summary():
+    """Affiche un résumé des tables créées avec leurs libellés d'affichage"""
+    async for session in get_session():
+        try:
+            # Récupérer la liste des tables
+            result = await session.execute(text("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_type = 'BASE TABLE'
+                ORDER BY table_name
+            """))
             
-            # Villes
-            ("INSERT INTO villes (codeVille, libelle) VALUES ('RABAT', 'Rabat') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO villes (codeVille, libelle) VALUES ('CASA', 'Casablanca') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO villes (codeVille, libelle) VALUES ('FES', 'Fès') ON CONFLICT DO NOTHING;"),
+            tables = [row[0] for row in result.fetchall()]
             
-            # Marques
-            ("INSERT INTO marques (codeMarques, libelle) VALUES ('MERCEDES', 'Mercedes') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO marques (codeMarques, libelle) VALUES ('BMW', 'BMW') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO marques (codeMarques, libelle) VALUES ('AUDI', 'Audi') ON CONFLICT DO NOTHING;"),
+            print(f"\n📊 Résumé: {len(tables)} tables créées dans la base de données")
+            print("Tables disponibles avec libellés d'affichage:")
             
-            # Carrosseries
-            ("INSERT INTO carrosseries (codeCarrosseries, libelle) VALUES ('BERLINE', 'Berline') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO carrosseries (codeCarrosseries, libelle) VALUES ('SUV', 'SUV') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO carrosseries (codeCarrosseries, libelle) VALUES ('BREAK', 'Break') ON CONFLICT DO NOTHING;"),
-            
-            # Banques
-            ("INSERT INTO banques (codeBanques, libelle) VALUES ('BMCE', 'BMCE') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO banques (codeBanques, libelle) VALUES ('CIH', 'CIH') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO banques (codeBanques, libelle) VALUES ('ATW', 'Attijariwafa Bank') ON CONFLICT DO NOTHING;"),
-            
-            # Modes de paiement
-            ("INSERT INTO paiement (codePaiement, libelle) VALUES ('VIREMENT', 'Virement bancaire') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO paiement (codePaiement, libelle) VALUES ('CHEQUE', 'Chèque') ON CONFLICT DO NOTHING;"),
-            ("INSERT INTO paiement (codePaiement, libelle) VALUES ('ESPECES', 'Espèces') ON CONFLICT DO NOTHING;"),
-        ]
-        
-        with engine.connect() as connection:
-            for sql in initial_data:
-                connection.execute(text(sql))
-            connection.commit()
-        
-        print("✅ Données initiales insérées !")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Erreur lors de l'insertion des données : {e}")
-        return False
-
-def main():
-    """Fonction principale"""
-    print("🚀 Initialisation de la base de données")
-    print("=" * 50)
-    
-    # Attendre que la base de données soit disponible
-    if not wait_for_database():
-        return False
-    
-    # Lire le fichier CSV
-    tables = read_csv_file()
-    if not tables:
-        return False
-    
-    # Créer les tables
-    if not create_tables(tables):
-        return False
-    
-    # Insérer les données initiales
-    if not insert_initial_data():
-        return False
-    
-    print("\n🎉 Initialisation terminée avec succès !")
-    print("✅ Base de données prête pour l'application")
-    
-    return True
+            for table in tables:
+                print(f"\n  📋 {table}:")
+                
+                # Récupérer les colonnes avec leurs commentaires (libellés d'affichage)
+                try:
+                    columns_result = await session.execute(text(f"""
+                        SELECT column_name, col_description((table_name)::regclass, ordinal_position) as comment
+                        FROM information_schema.columns 
+                        WHERE table_name = '{table}' 
+                        AND table_schema = 'public'
+                        ORDER BY ordinal_position
+                    """))
+                    
+                    columns = columns_result.fetchall()
+                    for col_name, comment in columns:
+                        if comment:
+                            print(f"    • {col_name} → {comment}")
+                        else:
+                            print(f"    • {col_name}")
+                            
+                except Exception as e:
+                    print(f"    ⚠️ Impossible de récupérer les colonnes: {e}")
+                
+        except Exception as e:
+            print(f"❌ Erreur lors de la récupération du résumé: {e}")
+        finally:
+            await session.close()
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1) 
+    print("🚀 Initialisation de la base de données à partir du fichier CSV...")
+    print("=" * 60)
+    
+    success = asyncio.run(create_tables_from_csv())
+    
+    if success:
+        print("\n" + "=" * 60)
+        asyncio.run(show_table_summary())
+        print("✅ Initialisation terminée avec succès")
+        sys.exit(0)
+    else:
+        print("❌ Échec de l'initialisation")
+        sys.exit(1)

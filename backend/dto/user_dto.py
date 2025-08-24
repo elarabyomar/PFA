@@ -1,15 +1,15 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime
 
 class UserLoginDTO(BaseModel):
-    email: EmailStr
+    email: str  # Simplifié pour éviter les problèmes de validation EmailStr
     password: str
 
 class UserCreateDTO(BaseModel):
     nom: str = Field(..., min_length=2, max_length=50, description="Nom de l'utilisateur")
     prenom: str = Field(..., min_length=2, max_length=50, description="Prénom de l'utilisateur")
-    email: EmailStr = Field(..., description="Email unique de l'utilisateur")
+    email: str = Field(..., description="Email unique de l'utilisateur")  # Simplifié
     password: Optional[str] = Field(None, min_length=6, description="Mot de passe de l'utilisateur (optionnel, généré automatiquement si non fourni)")
     date_naissance: date = Field(..., description="Date de naissance (format: YYYY-MM-DD)")
     role: str = Field(..., description="Rôle de l'utilisateur")
@@ -17,7 +17,7 @@ class UserCreateDTO(BaseModel):
 class UserUpdateDTO(BaseModel):
     nom: Optional[str] = Field(None, min_length=2, max_length=50, description="Nom de l'utilisateur")
     prenom: Optional[str] = Field(None, min_length=2, max_length=50, description="Prénom de l'utilisateur")
-    email: Optional[EmailStr] = Field(None, description="Email unique de l'utilisateur")
+    email: Optional[str] = Field(None, description="Email unique de l'utilisateur")  # Simplifié
     date_naissance: Optional[date] = Field(None, description="Date de naissance (format: YYYY-MM-DD)")
     role: Optional[str] = Field(None, description="Rôle de l'utilisateur")
 

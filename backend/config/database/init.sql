@@ -12,17 +12,17 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Insérer l'utilisateur admin par défaut avec mot de passe "admin" (hashé avec bcrypt)
+-- Insérer l'utilisateur admin par défaut avec mot de passe "admin" (non hashé pour permettre la connexion)
 -- Note: Les mots de passe par défaut sont "admin" ou la date de naissance au format YYYYMMDD (ex: 20031125)
 INSERT INTO users (nom, prenom, email, password, date_naissance, role, password_changed, created_at, updated_at) 
 VALUES (
     'admin', 
     'admin', 
     'admin@gmail.com', 
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.i8mO',  -- Hash bcrypt pour "admin"
+    'admin',  -- Mot de passe non hashé pour permettre la connexion initiale
     '2003-11-25',
     'admin',
-    FALSE,
+    FALSE,  -- Doit changer son mot de passe
     NOW(),
     NOW()
 ) 
