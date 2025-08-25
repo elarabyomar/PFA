@@ -117,7 +117,6 @@ users,role,Rôle de l'utilisateur,,FALSE,FALSE,VARCHAR(255),MASTER,Rôle
 users,password_changed,Indique si le mot de passe a été changé,TRUE/FALSE,FALSE,FALSE,BOOLEAN,MASTER,Mot de Passe Changé
 users,created_at,Date de création du compte,,FALSE,FALSE,TIMESTAMP,MASTER,Date Création
 users,updated_at,Date de dernière modification,,FALSE,FALSE,TIMESTAMP,MASTER,Date Modification
-users,idProfile,Rôle  de l'utilisateur ( identifiant du profile ),,FALSE,TRUE,INT,MASTER,Profil
 refProfiles,idProfile,Identifiant profile,,TRUE,TRUE,SERIAL,MASTER,ID Profil
 refProfiles,idDroit,Identifiant droit,,TRUE,TRUE,SERIAL,MASTER,ID Droit
 infos,idUser,Identifiant de l'utilisateur,,TRUE,TRUE,SERIAL,MASTER,ID Utilisateur
@@ -167,134 +166,134 @@ commission_plage,min,Min de plage,,FALSE,FALSE,"NUMERIC(12, 2)",REFERENCE,Minimu
 commission_plage,max,Max de plage,,FALSE,FALSE,"NUMERIC(12, 2)",REFERENCE,Maximum
 commission_plage,tauxCommission,Taux de commission,,FALSE,FALSE,"NUMERIC(5, 4)",REFERENCE,Taux Commission
 commission_plage,minCommission,Minimum de commission,,FALSE,FALSE,"NUMERIC(10, 2)",REFERENCE,Commission Minimum
-commission_forfait,idCommissionType,Identifiant technique,,TRUE,TRUE,SERIAL,REFERENCE
-taxe,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-usage,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-usage,codeUsage,Code usage,,FALSE,FALSE,VARCHAR(50),REFERENCE
-usage,libelle,Libellé Usage,Usage A/ Usage F,FALSE,FALSE,VARCHAR(255),REFERENCE
-rdv,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-rdv,codeRDV,Code RDV,,FALSE,FALSE,VARCHAR(50),REFERENCE
-rdv,libelle,Libellé de rendez-vous,,FALSE,FALSE,VARCHAR(255),REFERENCE
-droits,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-droits,codeDroits,Code de droit,,FALSE,FALSE,VARCHAR(50),REFERENCE
-droits,libelle,Libelle de droit,,FALSE,FALSE,VARCHAR(255),REFERENCE
-profiles,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-profiles,codeDroits,Code de profile,,FALSE,TRUE,VARCHAR(50),REFERENCE
-profiles,libelle,Libelle de profile,,FALSE,FALSE,VARCHAR(255),REFERENCE
-marques,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-marques,codeMarques,Code marques,,FALSE,FALSE,VARCHAR(50),REFERENCE
-marques,libelle,Libellé de marque,HONDA/MERCEDES,FALSE,FALSE,VARCHAR(255),REFERENCE
-carrosseries,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-carrosseries,codeCarrosseries,Code carrosseries,,FALSE,FALSE,VARCHAR(50),REFERENCE
-carrosseries,libelle,Libellé de carrosserie,SUV/BERLINE,FALSE,FALSE,VARCHAR(255),REFERENCE
-villes,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-villes,codeVilles,Code villes,,FALSE,FALSE,VARCHAR(50),REFERENCE
-villes,libelle,Libellé de ville,RABAT/CASA,FALSE,FALSE,VARCHAR(255),REFERENCE
-banques,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-banques,codeBanques,Code banques,,FALSE,FALSE,VARCHAR(50),REFERENCE
-banques,libelle,Libellé de banque,BMCE/CIH,FALSE,FALSE,VARCHAR(255),REFERENCE
-bonus_auto,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-bonus_auto,codeBonus,Code bonus auto,,FALSE,FALSE,VARCHAR(50),REFERENCE
-bonus_auto,libelle,Libellé bonus auto,,FALSE,FALSE,VARCHAR(255),REFERENCE
-bonus_auto,coeff,Coefficient du bonus,,FALSE,FALSE,VARCHAR(255),REFERENCE
-bonus_auto,taux,Taux,,FALSE,FALSE,"DECIMAL(4,2)",REFERENCE
-paiment,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE
-paiment,codePaiment,Code mode de paiment,,FALSE,FALSE,VARCHAR(50),REFERENCE
-paiment,libelle,Mode de paiment,,FALSE,FALSE,VARCHAR(255),REFERENCE
-devis,id,Identifiant devis,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-devis,idClient,Lien vers client,,FALSE,TRUE,INT,TRANSACTIONAL
-devis,idUser,Lien vers utilisateur,,FALSE,TRUE,INT,TRANSACTIONAL
-devis,idProduit,Lien vers produit,,FALSE,TRUE,INT,TRANSACTIONAL
-devis,dateCreation,Date de création,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-devis,etat,Etat du devis,ex: Attente Tarif CIE,FALSE,FALSE,VARCHAR(50),TRANSACTIONAL
-devis,montantEstime,Montant estimé,,FALSE,FALSE,"DECIMAL(12,2)",TRANSACTIONAL
-devis,observations,Notes ou commentaires,,FALSE,FALSE,TEXT,TRANSACTIONAL
-production,id,Identifiant technique production,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-production,idQuittance,Lien vers Quittance,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idClient,Lien vers client,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idCIE,Lien vers compagnie,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idProduit,Lien vers produit,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idBranche,Lien vers Branche,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idGarantie,Lien vers Garantie,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idSousGarantie,Lien vers Sous Garantie,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idUsage,Lien vers Usage,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idAvenant,Lien vers Avenant,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idSousTypeAvenant,Lien vers Ss Type Avenant,,FALSE,TRUE,INT,TRANSACTIONAL
-production,numPolice,Numéro de police unique,,FALSE,FALSE,VARCHAR(100),TRANSACTIONAL
-production,dateDebut,Date d'effet du quittance,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-production,dateFin,Date d'echeance/expiration de contrat,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-production,dateEmis,Date d'emission,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-production,dateEncaissement,Date d'encaissement,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-production,typeEncaissement,Mode d'encaissement,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-production,primeTotale,Prime totale du contrat,,FALSE,FALSE,"DECIMAL(12,2)",TRANSACTIONAL
-production,idComission,Lien vers Commission,,FALSE,TRUE,INT,TRANSACTIONAL
-production,idTaxes,Lien vers Taxes,,FALSE,TRUE,INT,TRANSACTIONAL
-sinistre,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-sinistre,idProduction,Lien vers production,,FALSE,TRUE,INT,TRANSACTIONAL
-sinistre,dateDeclaration,Date declaration de sinistre,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-sinistre,dateSurvenance,Date survenance de sinistre,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-sinistre,dateVue,Date vue de sinistre,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-sinistre,idSousGarantie,Lien vers Sous Garantie,,FALSE,TRUE,INT,TRANSACTIONAL
-sinistre,etat,Etat du sinistre,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-sinistre_vue,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-sinistre_vue,idSinistre,Lien vers sinistre,,FALSE,TRUE,INT,TRANSACTIONAL
-sinistre_vue,dateMouvement,Date de mouvement,,FALSE,FALSE,TIMESTAMP,TRANSACTIONAL
-sinistre_vue,typeMouvement,Type de mouvement,EVALUATION/PAIMENT,FALSE,FALSE,VARCHAR(20),TRANSACTIONAL
-sinistre_vue,montant,Montant,,FALSE,FALSE,"NUMERIC(12, 2)",TRANSACTIONAL
-attestation,id,Identifiant technique attestation,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-attestation,idCIE,Lien vers compagnie,,FALSE,TRUE,INT,TRANSACTIONAL
-attestation,idUser,Lien vers utilisateur,,FALSE,TRUE,INT,TRANSACTIONAL
-attestation,dateLivraison,Date de livraison,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-attestation,codeUsage,Type d'usage,,FALSE,TRUE,VARCHAR(50),TRANSACTIONAL
-reglement,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-reglement,idProduction,Lien vers production,,FALSE,TRUE,INT,TRANSACTIONAL
-reglement,idPaiment,Lien vers mode de paiment,,FALSE,TRUE,INT,TRANSACTIONAL
-reglement,dateReglement,Date de reglement,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-reglement,ref,Reference,,FALSE,FALSE,INT,TRANSACTIONAL
-reglement,mode,Mode de paiment,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-agenda,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-agenda,idUser,Lien vers utilisateur,,FALSE,TRUE,INT,TRANSACTIONAL
-agenda,idRDV,Lien vers RDV,,FALSE,TRUE,INT,TRANSACTIONAL
-agenda,objet,Objet du  journee,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-agenda,description,Description,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-agenda,dateDebut,Date du debut,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-agenda,dateFin,Date du fin,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-userProfiles,idUser,Identifiant de l'utilisateur,,TRUE,TRUE,SERIAL,TRANSACTIONAL
-userProfiles,idProfile,Identifiant profile,,TRUE,TRUE,SERIAL,TRANSACTIONAL
-avenant_soustype,id,Identifiant de sous type,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-avenant_soustype,idAvenant,Lien vers avenant,,FALSE,TRUE,INT,TRANSACTIONAL
-avenant_soustype,description,Description de sous type avenant,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-opportunites,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-opportunites,idClient,Lien vers le client (statut OPPORTUNITE),,FALSE,TRUE,INT,TRANSACTIONAL
-opportunites,idUser,Lien vers l'utilisateur en charge,,FALSE,TRUE,INT,TRANSACTIONAL
-opportunites,idProduit,Produit d'intérêt pour le prospect,,FALSE,TRUE,INT,TRANSACTIONAL
-opportunites,budgetEstime,Budget communiqué par le prospect,,FALSE,FALSE,"NUMERIC(12,2)",TRANSACTIONAL
-opportunites,origine,Origine de l'opportunité,Prospection/Référencement/Campagne Marketing/Appel entrant,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-opportunites,etape,Etape actuelle dans le cycle de vente,Qualification/Analyse besoin/Proposition/Gagnée/Perdue,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-opportunites,dateCreation,Date de création de l'opportunité,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-opportunites,dateEcheance,Date d'échéance prévue pour la décision,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-opportunites,description,Notes et détails sur le besoin du prospect,,FALSE,FALSE,TEXT,TRANSACTIONAL
-reclamations,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-reclamations,idClient,Lien vers le client (statut OPPORTUNITE),,FALSE,TRUE,INT,TRANSACTIONAL
-reclamations,idProduction,Lien vers la police concernée,,FALSE,TRUE,INT,TRANSACTIONAL
-reclamations,idUser,Lien vers l'utilisateur en charge,,FALSE,TRUE,INT,TRANSACTIONAL
-reclamations,objet,Objet / Titre de la réclamation,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-reclamations,description,Description détaillée de la réclamation,,FALSE,FALSE,TEXT,TRANSACTIONAL
-reclamations,dateOuverture,Date d'ouverture de la réclamation,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-reclamations,dateCloture,Date de clôture de la réclamation,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-reclamations,etat,État actuel de la réclamation,OUVERTE/EN_COURS/TRAITEE/CLOTUREE,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-reclamations,solution,Description de la solution apportée,,FALSE,FALSE,TEXT,TRANSACTIONAL
-recommandations,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL
-recommandations,idClientRecommande,Le nouveau client qui a été recommandé,,FALSE,TRUE,INT,TRANSACTIONAL
-recommandations,sourceType,"Type de source (un autre client, un partenaire)",CLIENT/PARTENAIRE/AUTRE,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-recommandations,sourceId,ID de la source (ex: idClient du référent),,FALSE,TRUE,INT,TRANSACTIONAL
-recommandations,dateRecommandation,Date à laquelle la recommandation a été faite,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL
-recommandations,statut,Statut de la recommandation,EN_COURS/CONVERTI,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL
-historique_modifications,id,Identifiant technique,,TRUE,FALSE,SERIAL,LOG
-historique_modifications,nomTable,Nom de la table modifiée,,FALSE,FALSE,VARCHAR(255),LOG
-historique_modifications,idEnregistrement,ID de l'enregistrement affecté dans la table,,FALSE,FALSE,INT,LOG
-historique_modifications,nomColonne,Nom de la colonne modifiée,,FALSE,FALSE,VARCHAR(255),LOG
-historique_modifications,ancienneValeur,Valeur avant la modification,,FALSE,FALSE,TEXT,LOG
-historique_modifications,nouvelleValeur,Valeur après la modification,,FALSE,FALSE,TEXT,LOG
-historique_modifications,idUser,Utilisateur ayant effectué la modification,,FALSE,TRUE,INT,LOG
-historique_modifications,instantModification,Date et heure de la modification,,FALSE,FALSE,TIMESTAMP,LOG
+commission_forfait,idCommissionType,Identifiant technique,,TRUE,TRUE,SERIAL,REFERENCE,ID Type Commission
+taxe,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+usage,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+usage,codeUsage,Code usage,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Usage
+usage,libelle,Libellé Usage,Usage A/ Usage F,FALSE,FALSE,VARCHAR(255),REFERENCE,Libellé Usage
+rdv,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+rdv,codeRDV,Code RDV,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code RDV
+rdv,libelle,Libellé de rendez-vous,,FALSE,FALSE,VARCHAR(255),REFERENCE,Libellé RDV
+droits,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+droits,codeDroits,Code de droit,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Droit
+droits,libelle,Libelle de droit,,FALSE,FALSE,VARCHAR(255),REFERENCE,Libellé Droit
+profiles,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+profiles,codeDroits,Code de profile,,FALSE,TRUE,VARCHAR(50),REFERENCE,Code Droit
+profiles,libelle,Libelle de profile,,FALSE,FALSE,VARCHAR(255),REFERENCE,Libellé Profile
+marques,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+marques,codeMarques,Code marques,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Marque
+marques,libelle,Libellé de marque,HONDA/MERCEDES,FALSE,FALSE,VARCHAR(255),REFERENCE,Libellé Marque
+carrosseries,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+carrosseries,codeCarrosseries,Code carrosseries,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Carrosserie
+carrosseries,libelle,Libellé de carrosserie,SUV/BERLINE,FALSE,FALSE,VARCHAR(255),REFERENCE,Libellé Carrosserie
+villes,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+villes,codeVilles,Code villes,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Ville
+villes,libelle,Libellé de ville,RABAT/CASA,FALSE,FALSE,VARCHAR(255),REFERENCE,Libellé Ville
+banques,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+banques,codeBanques,Code banques,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Banque
+banques,libelle,Libellé de banque,BMCE/CIH,FALSE,FALSE,VARCHAR(255),REFERENCE,Libellé Banque
+bonus_auto,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+bonus_auto,codeBonus,Code bonus auto,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Bonus
+bonus_auto,libelle,Libellé bonus auto,,FALSE,FALSE,VARCHAR(255),REFERENCE,Libellé Bonus
+bonus_auto,coeff,Coefficient du bonus,,FALSE,FALSE,VARCHAR(255),REFERENCE,Coefficient
+bonus_auto,taux,Taux,,FALSE,FALSE,"DECIMAL(4,2)",REFERENCE,Taux
+paiment,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID
+paiment,codePaiment,Code mode de paiment,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Paiement
+paiment,libelle,Mode de paiment,,FALSE,FALSE,VARCHAR(255),REFERENCE,Mode Paiement
+devis,id,Identifiant devis,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+devis,idClient,Lien vers client,,FALSE,TRUE,INT,TRANSACTIONAL,Client
+devis,idUser,Lien vers utilisateur,,FALSE,TRUE,INT,TRANSACTIONAL,Utilisateur
+devis,idProduit,Lien vers produit,,FALSE,TRUE,INT,TRANSACTIONAL,Produit
+devis,dateCreation,Date de création,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Création
+devis,etat,Etat du devis,ex: Attente Tarif CIE,FALSE,FALSE,VARCHAR(50),TRANSACTIONAL,État
+devis,montantEstime,Montant estimé,,FALSE,FALSE,"DECIMAL(12,2)",TRANSACTIONAL,Montant Estimé
+devis,observations,Notes ou commentaires,,FALSE,FALSE,TEXT,TRANSACTIONAL,Observations
+production,id,Identifiant technique production,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+production,idQuittance,Lien vers Quittance,,FALSE,TRUE,INT,TRANSACTIONAL,Quittance
+production,idClient,Lien vers client,,FALSE,TRUE,INT,TRANSACTIONAL,Client
+production,idCIE,Lien vers compagnie,,FALSE,TRUE,INT,TRANSACTIONAL,Compagnie
+production,idProduit,Lien vers produit,,FALSE,TRUE,INT,TRANSACTIONAL,Produit
+production,idBranche,Lien vers Branche,,FALSE,TRUE,INT,TRANSACTIONAL,Branche
+production,idGarantie,Lien vers Garantie,,FALSE,TRUE,INT,TRANSACTIONAL,Garantie
+production,idSousGarantie,Lien vers Sous Garantie,,FALSE,TRUE,INT,TRANSACTIONAL,Sous-Garantie
+production,idUsage,Lien vers Usage,,FALSE,TRUE,INT,TRANSACTIONAL,Usage
+production,idAvenant,Lien vers Avenant,,FALSE,TRUE,INT,TRANSACTIONAL,Avenant
+production,idSousTypeAvenant,Lien vers Ss Type Avenant,,FALSE,TRUE,INT,TRANSACTIONAL,Sous-Type Avenant
+production,numPolice,Numéro de police unique,,FALSE,FALSE,VARCHAR(100),TRANSACTIONAL,Numéro Police
+production,dateDebut,Date d'effet du quittance,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Début
+production,dateFin,Date d'echeance/expiration de contrat,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Fin
+production,dateEmis,Date d'emission,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Émission
+production,dateEncaissement,Date d'encaissement,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Encaissement
+production,typeEncaissement,Mode d'encaissement,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Type Encaissement
+production,primeTotale,Prime totale du contrat,,FALSE,FALSE,"DECIMAL(12,2)",TRANSACTIONAL,Prime Totale
+production,idComission,Lien vers Commission,,FALSE,TRUE,INT,TRANSACTIONAL,Commission
+production,idTaxes,Lien vers Taxes,,FALSE,TRUE,INT,TRANSACTIONAL,Taxes
+sinistre,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+sinistre,idProduction,Lien vers production,,FALSE,TRUE,INT,TRANSACTIONAL,Production
+sinistre,dateDeclaration,Date declaration de sinistre,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Déclaration
+sinistre,dateSurvenance,Date survenance de sinistre,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Survenance
+sinistre,dateVue,Date vue de sinistre,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Vue
+sinistre,idSousGarantie,Lien vers Sous Garantie,,FALSE,TRUE,INT,TRANSACTIONAL,Sous-Garantie
+sinistre,etat,Etat du sinistre,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,État
+sinistre_vue,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+sinistre_vue,idSinistre,Lien vers sinistre,,FALSE,TRUE,INT,TRANSACTIONAL,Sinistre
+sinistre_vue,dateMouvement,Date de mouvement,,FALSE,FALSE,TIMESTAMP,TRANSACTIONAL,Date Mouvement
+sinistre_vue,typeMouvement,Type de mouvement,EVALUATION/PAIMENT,FALSE,FALSE,VARCHAR(20),TRANSACTIONAL,Type Mouvement
+sinistre_vue,montant,Montant,,FALSE,FALSE,"NUMERIC(12, 2)",TRANSACTIONAL,Montant
+attestation,id,Identifiant technique attestation,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+attestation,idCIE,Lien vers compagnie,,FALSE,TRUE,INT,TRANSACTIONAL,Compagnie
+attestation,idUser,Lien vers utilisateur,,FALSE,TRUE,INT,TRANSACTIONAL,Utilisateur
+attestation,dateLivraison,Date de livraison,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Livraison
+attestation,codeUsage,Type d'usage,,FALSE,TRUE,VARCHAR(50),TRANSACTIONAL,Type Usage
+reglement,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+reglement,idProduction,Lien vers production,,FALSE,TRUE,INT,TRANSACTIONAL,Production
+reglement,idPaiment,Lien vers mode de paiment,,FALSE,TRUE,INT,TRANSACTIONAL,Mode Paiement
+reglement,dateReglement,Date de reglement,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Règlement
+reglement,ref,Reference,,FALSE,FALSE,INT,TRANSACTIONAL,Référence
+reglement,mode,Mode de paiment,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Mode
+agenda,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+agenda,idUser,Lien vers utilisateur,,FALSE,TRUE,INT,TRANSACTIONAL,Utilisateur
+agenda,idRDV,Lien vers RDV,,FALSE,TRUE,INT,TRANSACTIONAL,RDV
+agenda,objet,Objet du  journee,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Objet
+agenda,description,Description,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Description
+agenda,dateDebut,Date du debut,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Début
+agenda,dateFin,Date du fin,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Fin
+userProfiles,idUser,Identifiant de l'utilisateur,,TRUE,TRUE,SERIAL,TRANSACTIONAL,ID Utilisateur
+userProfiles,idProfile,Identifiant profile,,TRUE,TRUE,SERIAL,TRANSACTIONAL,ID Profile
+avenant_soustype,id,Identifiant de sous type,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+avenant_soustype,idAvenant,Lien vers avenant,,FALSE,TRUE,INT,TRANSACTIONAL,Avenant
+avenant_soustype,description,Description de sous type avenant,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Description
+opportunites,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+opportunites,idClient,Lien vers le client (statut OPPORTUNITE),,FALSE,TRUE,INT,TRANSACTIONAL,Client
+opportunites,idUser,Lien vers l'utilisateur en charge,,FALSE,TRUE,INT,TRANSACTIONAL,Utilisateur
+opportunites,idProduit,Produit d'intérêt pour le prospect,,FALSE,TRUE,INT,TRANSACTIONAL,Produit
+opportunites,budgetEstime,Budget communiqué par le prospect,,FALSE,FALSE,"NUMERIC(12,2)",TRANSACTIONAL,Budget Estimé
+opportunites,origine,Origine de l'opportunité,Prospection/Référencement/Campagne Marketing/Appel entrant,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Origine
+opportunites,etape,Etape actuelle dans le cycle de vente,Qualification/Analyse besoin/Proposition/Gagnée/Perdue,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Étape
+opportunites,dateCreation,Date de création de l'opportunité,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Création
+opportunites,dateEcheance,Date d'échéance prévue pour la décision,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Échéance
+opportunites,description,Notes et détails sur le besoin du prospect,,FALSE,FALSE,TEXT,TRANSACTIONAL,Description
+reclamations,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+reclamations,idClient,Lien vers le client (statut OPPORTUNITE),,FALSE,TRUE,INT,TRANSACTIONAL,Client
+reclamations,idProduction,Lien vers la police concernée,,FALSE,TRUE,INT,TRANSACTIONAL,Production
+reclamations,idUser,Lien vers l'utilisateur en charge,,FALSE,TRUE,INT,TRANSACTIONAL,Utilisateur
+reclamations,objet,Objet / Titre de la réclamation,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Objet
+reclamations,description,Description détaillée de la réclamation,,FALSE,FALSE,TEXT,TRANSACTIONAL,Description
+reclamations,dateOuverture,Date d'ouverture de la réclamation,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Ouverture
+reclamations,dateCloture,Date de clôture de la réclamation,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Clôture
+reclamations,etat,État actuel de la réclamation,OUVERTE/EN_COURS/TRAITEE/CLOTUREE,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,État
+reclamations,solution,Description de la solution apportée,,FALSE,FALSE,TEXT,TRANSACTIONAL,Solution
+recommandations,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID
+recommandations,idClientRecommande,Le nouveau client qui a été recommandé,,FALSE,TRUE,INT,TRANSACTIONAL,Client Recommandé
+recommandations,sourceType,"Type de source (un autre client, un partenaire)",CLIENT/PARTENAIRE/AUTRE,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Type Source
+recommandations,sourceId,ID de la source (ex: idClient du référent),,FALSE,TRUE,INT,TRANSACTIONAL,ID Source
+recommandations,dateRecommandation,Date à laquelle la recommandation a été faite,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Recommandation
+recommandations,statut,Statut de la recommandation,EN_COURS/CONVERTI,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Statut
+historique_modifications,id,Identifiant technique,,TRUE,FALSE,SERIAL,LOG,ID
+historique_modifications,nomTable,Nom de la table modifiée,,FALSE,FALSE,VARCHAR(255),LOG,Nom Table
+historique_modifications,idEnregistrement,ID de l'enregistrement affecté dans la table,,FALSE,FALSE,INT,LOG,ID Enregistrement
+historique_modifications,nomColonne,Nom de la colonne modifiée,,FALSE,FALSE,VARCHAR(255),LOG,Nom Colonne
+historique_modifications,ancienneValeur,Valeur avant la modification,,FALSE,FALSE,TEXT,LOG,Ancienne Valeur
+historique_modifications,nouvelleValeur,Valeur après la modification,,FALSE,FALSE,TEXT,LOG,Nouvelle Valeur
+historique_modifications,idUser,Utilisateur ayant effectué la modification,,FALSE,TRUE,INT,LOG,Utilisateur
+historique_modifications,instantModification,Date et heure de la modification,,FALSE,FALSE,TIMESTAMP,LOG,Date Modification

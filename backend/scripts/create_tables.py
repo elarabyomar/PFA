@@ -87,8 +87,8 @@ def generate_create_table_sql(table_name, columns):
             # Par défaut, utiliser VARCHAR(255)
             data_type = 'VARCHAR(255)'
         
-        # Construire la définition de colonne avec le libellé d'affichage comme commentaire
-        column_def = f"{col_name} {data_type} COMMENT '{col_display_name}'"
+        # Construire la définition de colonne (sans COMMENT dans CREATE TABLE)
+        column_def = f"{col_name} {data_type}"
         
         if not col_nullable:
             column_def += " NOT NULL"
@@ -102,11 +102,11 @@ def generate_create_table_sql(table_name, columns):
     if primary_keys:
         column_definitions.append(f"PRIMARY KEY ({', '.join(primary_keys)})")
     
-    # Générer le SQL CREATE TABLE
+    # Générer le SQL CREATE TABLE (sans COMMENT)
     separator = ',\n    '
     sql = f"""CREATE TABLE IF NOT EXISTS {table_name} (
     {separator.join(column_definitions)}
-) COMMENT 'Table {table_name} avec libellés d''affichage'"""
+)"""
     
     return sql
 
@@ -146,26 +146,28 @@ async def create_tables_from_csv():
                     # Exécuter la création
                     await session.execute(text(create_sql))
                     print(f"  ✅ Table {table_name} créée")
+                    
+                    # Ajouter les commentaires sur la table et les colonnes
+                    try:
+                        # Commentaire sur la table (échapper les apostrophes)
+                        table_comment = f"Table {table_name} avec libelles d'affichage".replace("'", "''")
+                        await session.execute(text(f"COMMENT ON TABLE {table_name} IS '{table_comment}'"))
+                        
+                        # Commentaires sur les colonnes (échapper les apostrophes)
+                        for col in columns:
+                            col_name = col['name']
+                            display_name = col.get('display_name', col_name)
+                            # Échapper les apostrophes en les doublant
+                            safe_display_name = display_name.replace("'", "''")
+                            col_comment = f"COMMENT ON COLUMN {table_name}.{col_name} IS '{safe_display_name}'"
+                            await session.execute(text(col_comment))
+                        
+                        print(f"  ✅ Commentaires ajoutés pour {table_name}")
+                        
+                    except Exception as e:
+                        print(f"  ⚠️ Impossible d'ajouter les commentaires pour {table_name}: {e}")
             
-            # Créer l'utilisateur admin par défaut
-            print("🔧 Création de l'utilisateur admin...")
-            await session.execute(text("""
-                INSERT INTO users (nom, prenom, email, password, date_naissance, role, password_changed, created_at, updated_at) 
-                VALUES (
-                    'admin', 
-                    'admin', 
-                    'admin@gmail.com', 
-                    'admin',  -- Mot de passe non hashé pour permettre la connexion
-                    '2003-11-25',
-                    'admin',
-                    FALSE,  -- Doit changer son mot de passe
-                    NOW(),
-                    NOW()
-                ) 
-                ON CONFLICT (email) DO UPDATE SET 
-                    password = EXCLUDED.password,
-                    password_changed = EXCLUDED.password_changed
-            """))
+            
             
             # Créer des vues pour afficher les libellés d'affichage
             print("🔧 Création des vues avec libellés d'affichage...")
@@ -198,7 +200,7 @@ async def create_tables_from_csv():
             
             print("✅ Toutes les tables ont été créées avec succès")
             print("✅ Vues avec libellés d'affichage créées")
-            print("✅ Utilisateur admin créé (email: admin@gmail.com, mot de passe: admin)")
+            print("✅ Utilisateur admin sera créé par init.sql")
             
             return True
             
