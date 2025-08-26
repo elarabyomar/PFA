@@ -22,7 +22,7 @@ clients,proba,Proba de realisation,,FALSE,FALSE,VARCHAR(255),MASTER,Probabilité
 clients_relations,id,Identifiant technique,,TRUE,FALSE,SERIAL,MASTER,ID
 clients_relations,idClientPrincipal,ID du client source de la relation,,FALSE,TRUE,INT,MASTER,Client Principal
 clients_relations,idClientLie,ID du client lié,,FALSE,TRUE,INT,MASTER,Client Lié
-clients_relations,idTypeRelation,ID du type relation,,FALSE,TRUE,INT,MASTER,Type Relation
+clients_relations,idTypeRelation,ID du type relation,,FALSE,TRUE,INT,MASTER,ID Type Relation
 clients_relations,dateDebut,Date de début de la relation,YYYY-MM-DD,FALSE,FALSE,DATE,MASTER,Date Début
 clients_relations,dateFin,Date de fin de la relation (si applicable),YYYY-MM-DD,FALSE,FALSE,DATE,MASTER,Date Fin
 clients_relations,description,Notes ou commentaires sur la relation,,FALSE,FALSE,TEXT,MASTER,Description

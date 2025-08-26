@@ -21,6 +21,46 @@ export const databaseExplorerService = {
     }
   },
 
+  // Récupérer les libellés d'affichage d'une table
+  async getTableDisplayLabels(tableName) {
+    try {
+      const response = await api.get(`/admin/tables/${tableName}/display-labels`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Erreur lors de la récupération des libellés d\'affichage');
+    }
+  },
+
+  // Récupérer les descriptions des colonnes d'une table depuis le CSV
+  async getTableColumnDescriptions(tableName) {
+    try {
+      const response = await api.get(`/admin/tables/${tableName}/column-descriptions`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Erreur lors de la récupération des descriptions des colonnes');
+    }
+  },
+
+  // Récupérer les données des clés étrangères d'une table
+  async getTableForeignKeyData(tableName) {
+    try {
+      const response = await api.get(`/admin/tables/${tableName}/foreign-key-data`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Erreur lors de la récupération des données des clés étrangères');
+    }
+  },
+
+  // Récupérer les données des tables master référencées
+  async getMasterTablesData(tableName) {
+    try {
+      const response = await api.get(`/admin/tables/${tableName}/master-tables-data`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Erreur lors de la récupération des données des tables master');
+    }
+  },
+
   // Récupérer les données d'une table
   async getTableData(tableName, limit = 100, offset = 0) {
     try {

@@ -6,4 +6,3 @@ from model.user import User
 
 router = APIRouter()
 
-# Toutes les fonctions de changement de mot de passe ont été supprimées 

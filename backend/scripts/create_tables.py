@@ -58,12 +58,14 @@ def generate_create_table_sql(table_name, columns):
     """Génère le SQL CREATE TABLE pour une table donnée"""
     column_definitions = []
     primary_keys = []
+    foreign_keys = []
     
     for col in columns:
         col_name = col['name']
         col_display_name = col.get('display_name', col_name)  # Utiliser le libellé d'affichage
         col_format = col['format']
         col_primary = col['primary_key']
+        col_foreign = col['foreign_key']
         col_nullable = not col['primary_key']  # Les clés primaires ne peuvent pas être NULL
         
         # Définir le type de données
@@ -95,6 +97,10 @@ def generate_create_table_sql(table_name, columns):
         
         if col_primary:
             primary_keys.append(col_name)
+        
+        if col_foreign:
+            # Ajouter la contrainte de clé étrangère
+            foreign_keys.append(col_name)
         
         column_definitions.append(column_def)
     
@@ -166,6 +172,42 @@ async def create_tables_from_csv():
                         
                     except Exception as e:
                         print(f"  ⚠️ Impossible d'ajouter les commentaires pour {table_name}: {e}")
+                    
+                    # Ajouter les contraintes de clés étrangères
+                    try:
+                        for col in columns:
+                            if col['foreign_key']:
+                                col_name = col['name']
+                                # Déterminer la table référencée basée sur le nom de la colonne
+                                referenced_table = None
+                                if 'idCIE' in col_name:
+                                    referenced_table = 'compagnies'
+                                elif 'idUser' in col_name:
+                                    referenced_table = 'users'
+                                elif 'idClient' in col_name:
+                                    referenced_table = 'clients'
+                                elif 'idProduit' in col_name:
+                                    referenced_table = 'produits'
+                                elif 'idMarque' in col_name:
+                                    referenced_table = 'marques'
+                                elif 'idCarrosserie' in col_name:
+                                    referenced_table = 'carrosseries'
+                                
+                                if referenced_table:
+                                    # Créer la contrainte de clé étrangère
+                                    fk_sql = f"""
+                                        ALTER TABLE {table_name} 
+                                        ADD CONSTRAINT fk_{table_name}_{col_name} 
+                                        FOREIGN KEY ({col_name}) 
+                                        REFERENCES {referenced_table}(id)
+                                    """
+                                    await session.execute(text(fk_sql))
+                                    print(f"  ✅ Clé étrangère {col_name} → {referenced_table}.id créée")
+                                else:
+                                    print(f"  ⚠️ Impossible de déterminer la table référencée pour {col_name}")
+                        
+                    except Exception as e:
+                        print(f"  ⚠️ Impossible d'ajouter les clés étrangères pour {table_name}: {e}")
             
             
             
@@ -199,6 +241,7 @@ async def create_tables_from_csv():
             await session.commit()
             
             print("✅ Toutes les tables ont été créées avec succès")
+            print("✅ Contraintes de clés étrangères créées")
             print("✅ Vues avec libellés d'affichage créées")
             print("✅ Utilisateur admin sera créé par init.sql")
             
