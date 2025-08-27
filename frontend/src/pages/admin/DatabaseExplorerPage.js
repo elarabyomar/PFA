@@ -911,6 +911,16 @@ const DatabaseExplorerPage = () => {
                                           />
                                         </Tooltip>
                                       )}
+                                      {isForeignKey(column.name) && (
+                                        <Tooltip title={`Référence: ${getForeignKeyInfo(column.name)?.referenced_table}.${getForeignKeyInfo(column.name)?.referenced_column}`}>
+                                          <Chip
+                                            label={`→ ${getForeignKeyInfo(column.name)?.referenced_table}`}
+                                            size="small"
+                                            color="info"
+                                            variant="outlined"
+                                          />
+                                        </Tooltip>
+                                      )}
                                     </Box>
                                   </TableCell>
                                 </TableRow>
@@ -945,18 +955,86 @@ const DatabaseExplorerPage = () => {
                           <Card variant="outlined">
                             <CardContent>
                               <Typography variant="h6" gutterBottom>
-                                Clés Étrangères
+                                Clés Étrangères ({tableStructure.foreign_keys.length})
                               </Typography>
-                              <Box display="flex" gap={1} flexWrap="wrap">
+                              <Box display="flex" flexDirection="column" gap={1}>
                                 {tableStructure.foreign_keys.map((fk) => (
-                                  <Tooltip key={fk.column} title={`${fk.column} → ${fk.referenced_table}.${fk.referenced_column}`}>
-                                    <Chip
-                                      label={fk.column}
-                                      color="secondary"
-                                      variant="outlined"
-                                    />
-                                  </Tooltip>
+                                  <Box 
+                                    key={fk.column} 
+                                    sx={{ 
+                                      p: 1, 
+                                      border: '1px solid', 
+                                      borderColor: 'secondary.main',
+                                      borderRadius: 1,
+                                      backgroundColor: 'secondary.50'
+                                    }}
+                                  >
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <Chip
+                                        label="FK"
+                                        size="small"
+                                        color="secondary"
+                                        variant="filled"
+                                      />
+                                      <Typography variant="body2" fontWeight="bold">
+                                        {fk.column}
+                                      </Typography>
+                                      <Typography variant="body2" color="text.secondary">
+                                        →
+                                      </Typography>
+                                      <Chip
+                                        label={fk.referenced_table}
+                                        size="small"
+                                        color="primary"
+                                        variant="outlined"
+                                      />
+                                      <Typography variant="body2" color="text.secondary">
+                                        .
+                                      </Typography>
+                                      <Chip
+                                        label={fk.referenced_column}
+                                        size="small"
+                                        color="info"
+                                        variant="outlined"
+                                      />
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                      Référence: {fk.column} → {fk.referenced_table}.{fk.referenced_column}
+                                    </Typography>
+                                  </Box>
                                 ))}
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      )}
+
+                      {/* Résumé des relations */}
+                      {tableStructure.foreign_keys.length > 0 && (
+                        <Grid item xs={12}>
+                          <Card variant="outlined">
+                            <CardContent>
+                              <Typography variant="h6" gutterBottom>
+                                Relations de la Table
+                              </Typography>
+                              <Box display="flex" flexDirection="column" gap={2}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Cette table est liée aux tables suivantes via des clés étrangères:
+                                </Typography>
+                                <Box display="flex" flexWrap="wrap" gap={1}>
+                                  {Array.from(new Set(tableStructure.foreign_keys.map(fk => fk.referenced_table))).map(tableName => (
+                                    <Chip
+                                      key={tableName}
+                                      label={tableName}
+                                      color="primary"
+                                      variant="outlined"
+                                      size="medium"
+                                    />
+                                  ))}
+                                </Box>
+                                <Typography variant="body2" color="text.secondary">
+                                  Colonnes qui référencent d&apos;autres tables: {tableStructure.foreign_keys.map(fk => fk.column).join(', ')}
+                                </Typography>
                               </Box>
                             </CardContent>
                           </Card>
@@ -996,12 +1074,30 @@ const DatabaseExplorerPage = () => {
                           <TableRow>
                               {tableData.columns.map((column) => {
                                 const displayLabel = tableDisplayLabels[selectedTable]?.[column] || column;
+                                const isFK = isForeignKey(column);
+                                const fkInfo = isFK ? getForeignKeyInfo(column) : null;
+                                
                                 return (
-                              <TableCell key={column} sx={{ fontWeight: 'bold' }}>
-                                    {displayLabel}
-                              </TableCell>
+                                  <TableCell key={column} sx={{ fontWeight: 'bold' }}>
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <Typography variant="body2">
+                                        {displayLabel}
+                                      </Typography>
+                                      {isFK && (
+                                        <Tooltip title={`FK → ${fkInfo?.referenced_table}.${fkInfo?.referenced_column}`}>
+                                          <Chip
+                                            label="FK"
+                                            size="small"
+                                            color="secondary"
+                                            variant="outlined"
+                                            sx={{ height: 20, fontSize: '0.7rem' }}
+                                          />
+                                        </Tooltip>
+                                      )}
+                                    </Box>
+                                  </TableCell>
                                 );
-                               })}
+                              })}
                             <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                           </TableRow>
                         </TableHead>

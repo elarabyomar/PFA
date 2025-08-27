@@ -30,6 +30,7 @@ import {
   Lock as LockIcon,
   Warning as WarningIcon,
   Storage as DatabaseIcon,
+  People as PeopleIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -62,6 +63,7 @@ const MainLayout = ({ children }) => {
 
   const menuItems = [
     { text: 'Accueil', icon: <HomeIcon />, path: '/home' },
+    { text: 'Clients', icon: <PeopleIcon />, path: '/clients' },
     ...(user?.role === 'admin' ? [
       { text: 'Dashboard Admin', icon: <AdminIcon />, path: '/admin' },
       { text: 'Gestion des Utilisateurs', icon: <GroupIcon />, path: '/admin/users' },

@@ -14,6 +14,7 @@ import DashboardPage from './pages/admin/DashboardPage';
 import RoleManagementPage from './pages/admin/RoleManagementPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import DatabaseExplorerPage from './pages/admin/DatabaseExplorerPage';
+import ClientsPage from './pages/clients/ClientsPage';
 
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
@@ -75,6 +76,17 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <HomePage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/clients"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <ClientsPage />
               </MainLayout>
             </ProtectedRoute>
           }

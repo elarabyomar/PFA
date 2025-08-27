@@ -1,0 +1,68 @@
+import api from './api';
+
+export const clientService = {
+  // Get clients with pagination, search, and filtering
+  getClients: async (params = {}) => {
+    const {
+      skip = 0,
+      limit = 50,
+      search = '',
+      typeClient = '',
+      statut = '',
+      importance = ''
+    } = params;
+
+    const queryParams = new URLSearchParams();
+    if (skip > 0) queryParams.append('skip', skip);
+    if (limit !== 50) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (typeClient) queryParams.append('typeClient', typeClient);
+    if (statut) queryParams.append('statut', statut);
+    if (importance) queryParams.append('importance', importance);
+
+    const response = await api.get(`/clients?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Get a single client by ID
+  getClient: async (clientId) => {
+    const response = await api.get(`/clients/${clientId}`);
+    return response.data;
+  },
+
+  // Create a new client
+  createClient: async (clientData) => {
+    const response = await api.post('/clients', clientData);
+    return response.data;
+  },
+
+  // Update an existing client
+  updateClient: async (clientId, clientData) => {
+    const response = await api.put(`/clients/${clientId}`, clientData);
+    return response.data;
+  },
+
+  // Delete a client
+  deleteClient: async (clientId) => {
+    const response = await api.delete(`/clients/${clientId}`);
+    return response.data;
+  },
+
+  // Get client types
+  getClientTypes: async () => {
+    const response = await api.get('/clients/types/list');
+    return response.data;
+  },
+
+  // Get client statuses
+  getClientStatuts: async () => {
+    const response = await api.get('/clients/statuts/list');
+    return response.data;
+  },
+
+  // Get client importance levels
+  getClientImportanceLevels: async () => {
+    const response = await api.get('/clients/importance/list');
+    return response.data;
+  }
+};

@@ -1,0 +1,72 @@
+db       | 2025-08-27 04:28:43.017 | The files belonging to this database system will be owned by user "postgres".
+db       | 2025-08-27 04:28:43.017 | This user must also own the server process.
+db       | 2025-08-27 04:28:43.017 | 
+db       | 2025-08-27 04:28:43.024 | The database cluster will be initialized with locale "en_US.utf8".
+db       | 2025-08-27 04:28:43.024 | The default database encoding has accordingly been set to "UTF8".
+db       | 2025-08-27 04:28:43.024 | The default text search configuration will be set to "english".
+db       | 2025-08-27 04:28:43.024 | 
+db       | 2025-08-27 04:28:43.024 | Data page checksums are disabled.
+db       | 2025-08-27 04:28:43.025 | 
+db       | 2025-08-27 04:28:43.025 | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+db       | 2025-08-27 04:28:43.046 | creating subdirectories ... ok
+db       | 2025-08-27 04:28:43.048 | selecting dynamic shared memory implementation ... posix
+db       | 2025-08-27 04:28:43.098 | selecting default max_connections ... 100
+db       | 2025-08-27 04:28:43.129 | selecting default shared_buffers ... 128MB
+db       | 2025-08-27 04:28:43.154 | selecting default time zone ... Etc/UTC
+db       | 2025-08-27 04:28:43.162 | creating configuration files ... ok
+db       | 2025-08-27 04:28:43.434 | running bootstrap script ... ok
+db       | 2025-08-27 04:28:44.061 | performing post-bootstrap initialization ... ok
+db       | 2025-08-27 04:28:44.537 | initdb: warning: enabling "trust" authentication for local connections
+db       | 2025-08-27 04:28:44.537 | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+db       | 2025-08-27 04:28:44.537 | syncing data to disk ... ok
+db       | 2025-08-27 04:28:44.537 | 
+db       | 2025-08-27 04:28:44.537 | 
+db       | 2025-08-27 04:28:44.537 | Success. You can now start the database server using:
+db       | 2025-08-27 04:28:44.537 | 
+db       | 2025-08-27 04:28:44.537 |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+db       | 2025-08-27 04:28:44.537 | 
+db       | 2025-08-27 04:28:44.612 | waiting for server to start....2025-08-27 03:28:44.611 UTC [48] LOG:  starting PostgreSQL 16.10 (Debian 16.10-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+db       | 2025-08-27 04:28:44.626 | 2025-08-27 03:28:44.626 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db       | 2025-08-27 04:28:44.663 | 2025-08-27 03:28:44.663 UTC [51] LOG:  database system was shut down at 2025-08-27 03:28:44 UTC
+db       | 2025-08-27 04:28:44.674 | 2025-08-27 03:28:44.674 UTC [48] LOG:  database system is ready to accept connections
+db       | 2025-08-27 04:28:44.769 |  done
+db       | 2025-08-27 04:28:44.769 | server started
+db       | 2025-08-27 04:28:44.997 | CREATE DATABASE
+db       | 2025-08-27 04:28:44.998 | 
+db       | 2025-08-27 04:28:44.998 | 
+db       | 2025-08-27 04:28:44.998 | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/init.sql
+db       | 2025-08-27 04:28:45.074 | CREATE TABLE
+db       | 2025-08-27 04:28:45.078 | INSERT 0 1
+db       | 2025-08-27 04:28:45.091 | CREATE TABLE
+db       | 2025-08-27 04:28:45.093 | INSERT 0 2
+db       | 2025-08-27 04:28:45.094 | psql:/docker-entrypoint-initdb.d/init.sql:52: NOTICE:  column "password_changed" of relation "users" already exists, skipping
+db       | 2025-08-27 04:28:45.096 | psql:/docker-entrypoint-initdb.d/init.sql:55: NOTICE:  column "roles" of relation "users" does not exist, skipping
+db       | 2025-08-27 04:28:45.095 | ALTER TABLE
+db       | 2025-08-27 04:28:45.097 | ALTER TABLE
+db       | 2025-08-27 04:28:45.099 | UPDATE 0
+db       | 2025-08-27 04:28:45.100 | UPDATE 1
+db       | 2025-08-27 04:28:45.101 |          message         
+db       | 2025-08-27 04:28:45.101 | -------------------------
+db       | 2025-08-27 04:28:45.101 |  Rôles créés avec succès
+db       | 2025-08-27 04:28:45.101 | (1 row)
+db       | 2025-08-27 04:28:45.101 | 
+db       | 2025-08-27 04:28:45.102 | 
+db       | 2025-08-27 04:28:45.102 | 
+db       | 2025-08-27 04:28:45.104 | waiting for server to shut down...2025-08-27 03:28:45.104 UTC [48] LOG:  received fast shutdown request
+db       | 2025-08-27 04:28:45.108 | .2025-08-27 03:28:45.107 UTC [48] LOG:  aborting any active transactions
+db       | 2025-08-27 04:28:45.110 | 2025-08-27 03:28:45.110 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+db       | 2025-08-27 04:28:45.110 | 2025-08-27 03:28:45.110 UTC [49] LOG:  shutting down
+db       | 2025-08-27 04:28:45.113 | 2025-08-27 03:28:45.113 UTC [49] LOG:  checkpoint starting: shutdown immediate
+db       | 2025-08-27 04:28:45.317 | 2025-08-27 03:28:45.316 UTC [49] LOG:  checkpoint complete: wrote 947 buffers (5.8%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.050 s, sync=0.139 s, total=0.207 s; sync files=313, longest=0.005 s, average=0.001 s; distance=4332 kB, estimate=4332 kB; lsn=0/192DDF8, redo lsn=0/192DDF8
+db       | 2025-08-27 04:28:45.323 | 2025-08-27 03:28:45.323 UTC [48] LOG:  database system is shut down
+db       | 2025-08-27 04:28:45.405 |  done
+db       | 2025-08-27 04:28:45.405 | server stopped
+db       | 2025-08-27 04:28:45.408 | 
+db       | 2025-08-27 04:28:45.408 | PostgreSQL init process complete; ready for start up.
+db       | 2025-08-27 04:28:45.408 | 
+db       | 2025-08-27 04:28:45.442 | 2025-08-27 03:28:45.441 UTC [1] LOG:  starting PostgreSQL 16.10 (Debian 16.10-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+db       | 2025-08-27 04:28:45.443 | 2025-08-27 03:28:45.443 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+db       | 2025-08-27 04:28:45.444 | 2025-08-27 03:28:45.443 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+db       | 2025-08-27 04:28:45.448 | 2025-08-27 03:28:45.448 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db       | 2025-08-27 04:28:45.459 | 2025-08-27 03:28:45.458 UTC [66] LOG:  database system was shut down at 2025-08-27 03:28:45 UTC
+db       | 2025-08-27 04:28:45.467 | 2025-08-27 03:28:45.467 UTC [1] LOG:  database system is ready to accept connections
