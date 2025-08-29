@@ -1,6 +1,15 @@
 from pydantic import BaseModel
 from typing import Optional
 from decimal import Decimal
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Log when this module is imported
+logger.info("🔍 Client DTO module imported")
+logger.info(f"🔍 Logger name: {__name__}")
 
 class ClientBase(BaseModel):
     codeClient: str
@@ -8,7 +17,6 @@ class ClientBase(BaseModel):
     adresse: Optional[str] = None
     tel: Optional[str] = None
     email: Optional[str] = None
-    statut: Optional[str] = None
     importance: Optional[str] = None
     budget: Optional[str] = None
     proba: Optional[str] = None
@@ -17,19 +25,57 @@ class ClientCreate(ClientBase):
     pass
 
 class ClientUpdate(BaseModel):
+    # Basic client fields
     codeClient: Optional[str] = None
     typeClient: Optional[str] = None
     adresse: Optional[str] = None
     tel: Optional[str] = None
     email: Optional[str] = None
-    statut: Optional[str] = None
     importance: Optional[str] = None
     budget: Optional[str] = None
     proba: Optional[str] = None
+    
+    # Particulier fields
+    titre: Optional[str] = None
+    nom: Optional[str] = None
+    prenom: Optional[str] = None
+    sexe: Optional[str] = None
+    nationalite: Optional[str] = None
+    lieuNaissance: Optional[str] = None
+    dateNaissance: Optional[str] = None
+    date_deces: Optional[str] = None
+    datePermis: Optional[str] = None
+    cin: Optional[str] = None
+    profession: Optional[str] = None
+    typeDocIdentite: Optional[str] = None
+    situationFamiliale: Optional[str] = None
+    nombreEnfants: Optional[int] = None
+    moyenContactPrefere: Optional[str] = None
+    optoutTelephone: Optional[bool] = None
+    optoutEmail: Optional[bool] = None
+    
+    # Societe fields
+    formeJuridique: Optional[str] = None
+    capital: Optional[Decimal] = None
+    registreCom: Optional[str] = None
+    taxePro: Optional[str] = None
+    idFiscal: Optional[str] = None
+    CNSS: Optional[str] = None
+    ICE: Optional[str] = None
+    siteWeb: Optional[str] = None
+    societeMere: Optional[int] = None
+    raisonSociale: Optional[str] = None
+    sigle: Optional[str] = None
+    tribunalCommerce: Optional[str] = None
+    secteurActivite: Optional[str] = None
+    dateCreationSociete: Optional[str] = None
+    nomContactPrincipal: Optional[str] = None
+    fonctionContactPrincipal: Optional[str] = None
 
 class ClientResponse(ClientBase):
     id: int
     nom: str  # Computed field: nom+prenom for particulier, nom for societe
+    isAssociated: Optional[bool] = False  # Whether this client is associated with another client
     
     class Config:
         from_attributes = True
@@ -49,7 +95,6 @@ class ParticulierBase(BaseModel):
     typeDocIdentite: Optional[str] = None
     situationFamiliale: Optional[str] = None
     nombreEnfants: Optional[int] = None
-    valeurTiers: Optional[int] = None
     moyenContactPrefere: Optional[str] = None
     optoutTelephone: Optional[bool] = None
     optoutEmail: Optional[bool] = None
@@ -72,7 +117,6 @@ class ParticulierUpdate(BaseModel):
     typeDocIdentite: Optional[str] = None
     situationFamiliale: Optional[str] = None
     nombreEnfants: Optional[int] = None
-    valeurTiers: Optional[int] = None
     moyenContactPrefere: Optional[str] = None
     optoutTelephone: Optional[bool] = None
     optoutEmail: Optional[bool] = None
@@ -99,7 +143,6 @@ class SocieteBase(BaseModel):
     tribunalCommerce: Optional[str] = None
     secteurActivite: Optional[str] = None
     dateCreationSociete: Optional[str] = None
-    valeurTiers: Optional[int] = None
     nomContactPrincipal: Optional[str] = None
     fonctionContactPrincipal: Optional[str] = None
 
@@ -122,7 +165,6 @@ class SocieteUpdate(BaseModel):
     tribunalCommerce: Optional[str] = None
     secteurActivite: Optional[str] = None
     dateCreationSociete: Optional[str] = None
-    valeurTiers: Optional[int] = None
     nomContactPrincipal: Optional[str] = None
     fonctionContactPrincipal: Optional[str] = None
 

@@ -9,6 +9,7 @@ import sys
 import os
 import csv
 import logging
+import subprocess
 from datetime import datetime
 from collections import defaultdict
 
@@ -218,6 +219,59 @@ def generate_create_table_sql(table_name, columns, all_tables_structure, logger)
     
     return sql
 
+async def run_init_data(logger):
+    """Run the init_data.py script to populate the database with initial data"""
+    logger.info("🚀 PHASE 4: Exécution du script init_data.py pour peupler la base...")
+    
+    try:
+        # Get the directory of the current script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        init_data_path = os.path.join(script_dir, 'init_data.py')
+        
+        if not os.path.exists(init_data_path):
+            logger.error(f"❌ Script init_data.py non trouvé: {init_data_path}")
+            return False
+        
+        logger.info(f"📁 Exécution de: {init_data_path}")
+        
+        # Run the init_data.py script as a subprocess
+        result = subprocess.run(
+            [sys.executable, init_data_path],
+            cwd=script_dir,
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            env={**os.environ, 'PYTHONPATH': f"{script_dir}:{os.path.dirname(script_dir)}:{os.environ.get('PYTHONPATH', '')}"}
+        )
+        
+        if result.returncode == 0:
+            logger.info("✅ Script init_data.py exécuté avec succès")
+            if result.stdout:
+                logger.info("📤 Sortie du script:")
+                for line in result.stdout.strip().split('\n'):
+                    if line.strip():
+                        logger.info(f"   {line}")
+            return True
+        else:
+            logger.error(f"❌ Échec de l'exécution de init_data.py (code: {result.returncode})")
+            if result.stdout:
+                logger.error("📤 Sortie standard du script:")
+                for line in result.stdout.strip().split('\n'):
+                    if line.strip():
+                        logger.error(f"   {line}")
+            if result.stderr:
+                logger.error("📤 Erreurs du script:")
+                for line in result.stderr.strip().split('\n'):
+                    if line.strip():
+                        logger.error(f"   {line}")
+            else:
+                logger.error("📤 Aucune erreur stderr capturée")
+            return False
+            
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de l'exécution de init_data.py: {e}", exc_info=True)
+        return False
+
 async def create_tables_from_csv():
     """Crée toutes les tables à partir du fichier CSV"""
     
@@ -396,10 +450,10 @@ async def create_tables_from_csv():
                                     
                                     logger.info(f"    🔗 Création FK: {col_name} → {table_part}.{column_part}")
                                     
-                                    # Vérifier si la contrainte FK existe déjà
+                                    # Vérifier si la contrainte FK existe déjà (case-insensitive)
                                     check_fk_sql = f"""
                                         SELECT COUNT(*) FROM information_schema.table_constraints 
-                                        WHERE constraint_name = 'fk_{table_name}_{col_name}' 
+                                        WHERE LOWER(constraint_name) = LOWER('fk_{table_name}_{col_name}') 
                                         AND table_name = '{table_name}'
                                     """
                                     result = await session.execute(text(check_fk_sql))
@@ -408,16 +462,30 @@ async def create_tables_from_csv():
                                     if fk_exists:
                                         logger.info(f"    ℹ️ Clé étrangère {col_name} → {table_part}.{column_part} existe déjà, ignorée")
                                     else:
-                                        # Créer la contrainte de clé étrangère
-                                        fk_sql = f"""
-                                            ALTER TABLE "{table_name}" 
-                                            ADD CONSTRAINT fk_{table_name}_{col_name} 
-                                            FOREIGN KEY ("{col_name}") 
-                                            REFERENCES "{table_part}"("{column_part}")
+                                        # Créer la contrainte de clé étrangère (utiliser le nom exact de la base)
+                                        # D'abord, récupérer le nom exact de la contrainte existante
+                                        get_existing_fk_sql = f"""
+                                            SELECT constraint_name FROM information_schema.table_constraints 
+                                            WHERE LOWER(constraint_name) LIKE LOWER('fk_{table_name}_{col_name}%') 
+                                            AND table_name = '{table_name}'
+                                            LIMIT 1
                                         """
-                                        logger.debug(f"📤 Exécution FK {table_name}.{col_name}: {fk_sql}")
-                                        await session.execute(text(fk_sql))
-                                        logger.info(f"    ✅ Clé étrangère {col_name} → {table_part}.{column_part} créée")
+                                        existing_result = await session.execute(text(get_existing_fk_sql))
+                                        existing_fk = existing_result.fetchone()
+                                        
+                                        if existing_fk:
+                                            logger.info(f"    ℹ️ Clé étrangère {col_name} → {table_part}.{column_part} existe déjà avec le nom: {existing_fk[0]}")
+                                        else:
+                                            # Créer la contrainte de clé étrangère
+                                            fk_sql = f"""
+                                                ALTER TABLE "{table_name}" 
+                                                ADD CONSTRAINT fk_{table_name}_{col_name} 
+                                                FOREIGN KEY ("{col_name}") 
+                                                REFERENCES "{table_part}"("{column_part}")
+                                            """
+                                            logger.debug(f"📤 Exécution FK {table_name}.{col_name}: {fk_sql}")
+                                            await session.execute(text(fk_sql))
+                                            logger.info(f"    ✅ Clé étrangère {col_name} → {table_part}.{column_part} créée")
                                 else:
                                     logger.warning(f"    ⚠️ Format de référence FK invalide pour {col_name}: {fk_reference}")
                             elif col['foreign_key'] and not col.get('foreign_key_reference'):
@@ -489,8 +557,6 @@ async def create_tables_from_csv():
                 # IMPORTANT: Fermer la session AVANT de retourner pour éviter les conflits
                 await session.close()
                 
-                return True
-                
             except Exception as e:
                 logger.error(f"❌ Erreur lors de la création des vues: {e}", exc_info=True)
                 await session.rollback()
@@ -499,6 +565,16 @@ async def create_tables_from_csv():
     except Exception as e:
         logger.error(f"❌ Erreur de session lors de la création des vues: {e}", exc_info=True)
         return False
+    
+    # PHASE 4: Exécution de init_data.py pour peupler la base
+    logger.info("🚀 PHASE 4: Exécution du script init_data.py pour peupler la base...")
+    
+    init_data_success = await run_init_data(logger)
+    if not init_data_success:
+        logger.warning("⚠️ Échec de l'exécution de init_data.py, mais les tables ont été créées")
+        logger.warning("⚠️ Vous pouvez exécuter manuellement: python scripts/init_data.py")
+    
+    return True
 
 async def show_table_summary(logger):
     """Affiche un résumé des tables créées avec leurs libellés d'affichage"""

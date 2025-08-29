@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime
-from sqlalchemy.orm import declarative_base
+from model.client import Base
 from datetime import datetime
-
-Base = declarative_base()
 
 class Role(Base):
     __tablename__ = "roles"

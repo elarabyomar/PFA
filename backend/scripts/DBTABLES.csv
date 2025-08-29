@@ -292,6 +292,7 @@ contrats,typeContrat,Type de contrat,Duree ferme / Duree compagne,FALSE,FALSE,VA
 contrats,dateDebut,Date de souscription,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Souscription,
 contrats,dateFin,Date de fin du contrat (VIDE si en cours ),YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Fin,
 contrats,idClient,Lien vers Clients,,FALSE,TRUE,INT,TRANSACTIONAL,Client,clients(id)
+contrats,idProduit,Produit d'intérêt pour le prospect,,FALSE,TRUE,INT,TRANSACTIONAL,Produit,produits(id)
 historique_modifications,id,Identifiant technique,,TRUE,FALSE,SERIAL,LOG,ID,
 historique_modifications,nomTable,Nom de la table modifiée,,FALSE,FALSE,VARCHAR(255),LOG,Nom Table,
 historique_modifications,idEnregistrement,ID de l'enregistrement affecté dans la table,,FALSE,FALSE,INT,LOG,ID Enregistrement,

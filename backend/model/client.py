@@ -1,8 +1,17 @@
 from sqlalchemy import Column, Integer, String, Numeric, Text, Boolean, Date, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Log when this module is imported
+logger.info("🔍 Client model module imported")
+logger.info(f"🔍 Logger name: {__name__}")
 
 Base = declarative_base()
+logger.info("🔍 Client Base declarative_base created")
 
 class Client(Base):
     __tablename__ = 'clients'
@@ -13,14 +22,18 @@ class Client(Base):
     adresse = Column(String(255))
     tel = Column(String(50))
     email = Column(String(100))
-    statut = Column(String(255))  # Opportunite/vrai client/ancien client
     importance = Column(String(255))
     budget = Column(String(255))
     proba = Column(String(255))
     
-    # Relationships
-    particulier = relationship("Particulier", back_populates="client", uselist=False)
-    societe = relationship("Societe", back_populates="client", uselist=False)
+    # Relationships - explicitly specify foreign keys to avoid ambiguity
+    particulier = relationship("Particulier", back_populates="client", uselist=False, foreign_keys="Particulier.idClient")
+    societe = relationship("Societe", back_populates="client", uselist=False, foreign_keys="Societe.idClient")
+    
+
+    
+    # Document and Adherent relationships - removed to avoid circular imports
+    # These will be handled through foreign keys only
 
 class Particulier(Base):
     __tablename__ = 'particuliers'
@@ -40,7 +53,6 @@ class Particulier(Base):
     typeDocIdentite = Column(String(50))
     situationFamiliale = Column(String(20))
     nombreEnfants = Column(Integer)
-    valeurTiers = Column(Integer)
     moyenContactPrefere = Column(String(20))
     optoutTelephone = Column(Boolean)
     optoutEmail = Column(Boolean)
@@ -67,9 +79,9 @@ class Societe(Base):
     tribunalCommerce = Column(String(100))
     secteurActivite = Column(String(255))
     dateCreationSociete = Column(Date)
-    valeurTiers = Column(Integer)
     nomContactPrincipal = Column(String(255))
     fonctionContactPrincipal = Column(String(255))
     
-    # Relationship
-    client = relationship("Client", back_populates="societe")
+    # Relationships - be explicit about which foreign key to use
+    client = relationship("Client", foreign_keys=[idClient], back_populates="societe")
+    societe_mere = relationship("Client", foreign_keys=[societeMere], remote_side="Client.id")

@@ -20,21 +20,31 @@ import {
   Tooltip,
   CircularProgress,
   Alert,
-  Stack
+  Stack,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
 } from '@mui/material';
 import {
   Add as AddIcon,
   Search as SearchIcon,
   FilterList as FilterIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { clientService } from '../../services/clientService';
+import { documentService } from '../../services/documentService';
 import StarRating from '../../components/common/StarRating';
+import ClientTypeModal from '../../components/clients/ClientTypeModal';
+import ClientInfoModal from '../../components/clients/ClientInfoModal';
+import ClientDetailsModal from '../../components/clients/ClientDetailsModal';
 
 const ClientsPage = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [skip, setSkip] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -43,16 +53,31 @@ const ClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     typeClient: '',
-    statut: '',
     importance: ''
   });
   
   // Filter options
   const [filterOptions, setFilterOptions] = useState({
     types: [],
-    statuts: [],
     importanceLevels: []
   });
+
+  // Modal states
+  const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [selectedClientType, setSelectedClientType] = useState(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState(null);
+  
+  // Delete confirmation modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState(null);
+  
+  // Success message state
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showError, setShowError] = useState(false);
 
   const limit = 50;
 
@@ -60,15 +85,13 @@ const ClientsPage = () => {
   useEffect(() => {
     const loadFilterOptions = async () => {
       try {
-        const [types, statuts, importanceLevels] = await Promise.all([
+        const [types, importanceLevels] = await Promise.all([
           clientService.getClientTypes(),
-          clientService.getClientStatuts(),
           clientService.getClientImportanceLevels()
         ]);
         
         setFilterOptions({
           types,
-          statuts,
           importanceLevels
         });
       } catch (error) {
@@ -82,8 +105,8 @@ const ClientsPage = () => {
   // Load clients
   const loadClients = useCallback(async (reset = false) => {
     try {
+      console.log(`🔄 loadClients called with reset=${reset}, skip=${skip}, searchTerm="${searchTerm}"`);
       setLoading(true);
-      setError(null);
       
       const currentSkip = reset ? 0 : skip;
       const params = {
@@ -94,19 +117,27 @@ const ClientsPage = () => {
       };
       
       const response = await clientService.getClients(params);
+      console.log('API Response:', response);
+      console.log('Clients data:', response.clients);
+      
+      // Filter out associated clients (clients that are linked to other clients)
+      const filteredClients = response.clients.filter(client => !client.isAssociated);
+      console.log('Filtered clients (excluding associated):', filteredClients);
       
       if (reset) {
-        setClients(response.clients);
+        setClients(filteredClients);
         setSkip(limit);
       } else {
-        setClients(prev => [...prev, ...response.clients]);
+        setClients(prev => [...prev, ...filteredClients]);
         setSkip(prev => prev + limit);
       }
       
-      setTotalCount(response.total_count);
-      setHasMore(response.has_more);
+      // Adjust total count to reflect filtered results
+      const adjustedTotalCount = Math.max(0, response.total_count - (response.clients.length - filteredClients.length));
+      setTotalCount(adjustedTotalCount);
+      setHasMore(response.has_more && filteredClients.length > 0);
+      console.log(`✅ loadClients completed: ${filteredClients.length} clients loaded, adjusted_total_count=${adjustedTotalCount}`);
     } catch (error) {
-      setError('Erreur lors du chargement des clients');
       console.error('Error loading clients:', error);
     } finally {
       setLoading(false);
@@ -137,6 +168,119 @@ const ClientsPage = () => {
   const handleRefresh = () => {
     setSkip(0);
     loadClients(true);
+  };
+
+  // Handle add client button click
+  const handleAddClient = () => {
+    setTypeModalOpen(true);
+  };
+
+  // Handle client type selection
+  const handleClientTypeSelect = (type) => {
+    setSelectedClientType(type);
+    setInfoModalOpen(true);
+  };
+
+    // Handle client info submission
+  const handleClientSubmit = async (clientData) => {
+    try {
+      console.log('Client data to submit:', clientData);
+      console.log('Client data type:', typeof clientData);
+      console.log('Client data keys:', Object.keys(clientData));
+      
+      // Log specific problematic fields
+      if (clientData.dateNaissance) console.log('dateNaissance:', clientData.dateNaissance, typeof clientData.dateNaissance);
+      if (clientData.date_deces) console.log('date_deces:', clientData.date_deces, typeof clientData.date_deces);
+      if (clientData.datePermis) console.log('datePermis:', clientData.datePermis, typeof clientData.datePermis);
+      if (clientData.dateCreationSociete) console.log('dateCreationSociete:', clientData.dateCreationSociete, typeof clientData.dateCreationSociete);
+      
+      // Call the API to create the client
+      const result = await documentService.createClientWithDocuments(clientData);
+      console.log('Client created successfully:', result);
+      
+      // Close the modal
+      setInfoModalOpen(false);
+      setSelectedClientType(null);
+      
+      // Show success message
+      setSuccessMessage('Client créé avec succès!');
+      setShowSuccess(true);
+      
+      // Refresh the clients list without resetting filters
+      loadClients(true);
+      
+    } catch (error) {
+      console.error('Error creating client:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        stack: error.stack
+      });
+      // Re-throw the error so the modal can catch and display it
+      throw error;
+    }
+  };
+
+  // Handle modal close
+  const handleInfoModalClose = () => {
+    setInfoModalOpen(false);
+    setSelectedClientType(null);
+  };
+
+  // Handle client row click
+  const handleClientRowClick = (clientId) => {
+    console.log('🖱️ Client row clicked, ID:', clientId);
+    setSelectedClientId(clientId);
+    setDetailsModalOpen(true);
+    console.log('✅ Modal state updated:', { selectedClientId: clientId, detailsModalOpen: true });
+  };
+
+  // Handle details modal close
+  const handleDetailsModalClose = () => {
+    setDetailsModalOpen(false);
+    setSelectedClientId(null);
+  };
+
+  // Handle delete client
+  const handleDeleteClient = async (clientId, event) => {
+    event.stopPropagation(); // Prevent row click
+    setClientToDelete(clientId);
+    setDeleteModalOpen(true);
+  };
+
+  // Handle delete confirmation
+  const handleConfirmDelete = async () => {
+    if (!clientToDelete) return;
+    console.log(`🗑️ handleConfirmDelete called for client ${clientToDelete}`);
+    try {
+      console.log(`🔄 Calling clientService.deleteClient(${clientToDelete})`);
+      const result = await clientService.deleteClient(clientToDelete);
+      console.log(`✅ Delete result:`, result);
+      
+      setSuccessMessage('Client supprimé avec succès');
+      setShowSuccess(true);
+      
+      console.log(`🔄 Refreshing client list...`);
+      await loadClients(true); // Refresh the list
+      console.log(`✅ Client list refreshed`);
+    } catch (error) {
+      console.error(`❌ Error deleting client ${clientToDelete}:`, error);
+      console.error(`❌ Error details:`, error.response?.data);
+      console.error(`❌ Error status:`, error.response?.status);
+      setErrorMessage('Erreur lors de la suppression du client');
+      setShowError(true);
+    } finally {
+      console.log(`🔄 Closing delete modal and resetting state`);
+      setDeleteModalOpen(false);
+      setClientToDelete(null);
+    }
+  };
+
+  // Handle delete cancellation
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setClientToDelete(null);
   };
 
   // Handle infinite scroll
@@ -214,33 +358,34 @@ const ClientsPage = () => {
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Statut</InputLabel>
-            <Select
-              value={filters.statut}
-              onChange={(e) => handleFilterChange('statut', e.target.value)}
-              label="Statut"
-            >
-              <MenuItem value="">Tous</MenuItem>
-              {filterOptions.statuts.map((statut) => (
-                <MenuItem key={statut} value={statut}>{statut}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Importance</InputLabel>
-            <Select
-              value={filters.importance}
-              onChange={(e) => handleFilterChange('importance', e.target.value)}
-              label="Importance"
-            >
-              <MenuItem value="">Toutes</MenuItem>
-              {filterOptions.importanceLevels.map((level) => (
-                <MenuItem key={level} value={level}>{level}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+
+          <Box sx={{ minWidth: 150 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Importance
+            </Typography>
+            <StarRating
+              value={parseFloat(filters.importance) || 0}
+              onChange={(value) => handleFilterChange('importance', value.toString())}
+              readOnly={false}
+              size="small"
+              showHalfStars={true}
+            />
+            {filters.importance && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {filters.importance} étoile{parseFloat(filters.importance) > 1 ? 's' : ''}
+                </Typography>
+                <IconButton 
+                  size="small" 
+                  onClick={() => handleFilterChange('importance', '')}
+                  sx={{ p: 0.5 }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            )}
+          </Box>
 
           <IconButton onClick={handleRefresh} color="primary">
             <RefreshIcon />
@@ -254,21 +399,24 @@ const ClientsPage = () => {
           
           <Button
             variant="contained"
-            color="success"
             startIcon={<AddIcon />}
-            sx={{ minWidth: 150 }}
+            onClick={handleAddClient}
+            sx={{ 
+              minWidth: 150,
+              backgroundColor: 'green',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: '#005000',
+                color: 'white'
+              }
+            }}
           >
             Ajouter Client
           </Button>
         </Stack>
       </Paper>
 
-      {/* Error Alert */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+             {/* Error Alert - Removed since errors are now handled in the modal */}
 
       {/* Clients Table */}
       <Paper>
@@ -279,21 +427,27 @@ const ClientsPage = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>NOM</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>TYPE</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>TEL</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>EMAIL</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>BUDGET</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>PROBA</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>IMPORTANCE</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Nom</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Téléphone</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Budget</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Réalisation</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Importance</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {clients.map((client) => (
-                <TableRow key={client.id} hover>
+                <TableRow 
+                  key={client.id} 
+                  hover 
+                  onClick={() => handleClientRowClick(client.id)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell>
                     <Typography variant="body2" fontWeight="medium">
-                      {client.nom}
+                      {client.nom || 'N/A'}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -320,7 +474,25 @@ const ClientsPage = () => {
                       value={parseImportance(client.importance)} 
                       readOnly={true}
                       size="small"
+                      showHalfStars={true}
                     />
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleDeleteClient(client.id, e)}
+                      color="error"
+                      title="Supprimer le client"
+                      sx={{ 
+                        color: 'red',
+                        '&:hover': {
+                          backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                          color: '#d32f2f'
+                        }
+                      }}
+                    >
+                      ✕
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -328,7 +500,7 @@ const ClientsPage = () => {
               {/* Loading row */}
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>
@@ -337,7 +509,7 @@ const ClientsPage = () => {
               {/* No more data row */}
               {!hasMore && clients.length > 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     <Typography variant="body2" color="text.secondary">
                       Aucun autre client à charger
                     </Typography>
@@ -348,7 +520,7 @@ const ClientsPage = () => {
               {/* Empty state */}
               {!loading && clients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     <Typography variant="body2" color="text.secondary">
                       Aucun client trouvé
                     </Typography>
@@ -359,8 +531,98 @@ const ClientsPage = () => {
           </Table>
         </TableContainer>
       </Paper>
-    </Box>
-  );
-};
+
+      {/* Client Type Selection Modal */}
+      <ClientTypeModal
+        open={typeModalOpen}
+        onClose={() => setTypeModalOpen(false)}
+        onTypeSelect={handleClientTypeSelect}
+      />
+
+             {/* Client Info Form Modal */}
+               <ClientInfoModal
+          open={infoModalOpen}
+          onClose={handleInfoModalClose}
+          clientType={selectedClientType}
+          onSubmit={handleClientSubmit}
+          onCancel={handleInfoModalClose}
+        />
+
+        {/* Client Details Modal */}
+        <ClientDetailsModal
+          open={detailsModalOpen}
+          onClose={handleDetailsModalClose}
+          clientId={selectedClientId}
+          onClientUpdated={() => {
+            console.log('🔄 onClientUpdated callback triggered - refreshing clients table...');
+            setSkip(0); // Reset pagination to start
+            loadClients(true); // Load from beginning with reset=true
+          }}
+          onRefreshMainTable={() => {
+            console.log('🔄 onRefreshMainTable callback triggered - refreshing clients table...');
+            setSkip(0); // Reset pagination to start
+            loadClients(true); // Load from beginning with reset=true
+          }}
+        />
+       
+               {/* Success Message Snackbar */}
+        <Snackbar
+          open={showSuccess}
+          autoHideDuration={3000}
+          onClose={() => setShowSuccess(false)}
+          message={successMessage}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          sx={{
+            zIndex: 9999, // Ensure it appears above everything
+            '& .MuiSnackbarContent-root': {
+              backgroundColor: '#4caf50',
+              color: 'white',
+              fontWeight: 'bold'
+            }
+          }}
+        />
+
+        {/* Error Message Snackbar */}
+        <Snackbar
+          open={showError}
+          autoHideDuration={3000}
+          onClose={() => setShowError(false)}
+          message={errorMessage}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          sx={{
+            zIndex: 9999,
+            '& .MuiSnackbarContent-root': {
+              backgroundColor: '#f44336',
+              color: 'white',
+              fontWeight: 'bold'
+            }
+          }}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteModalOpen}
+          onClose={handleCancelDelete}
+          aria-labelledby="delete-dialog-title"
+          aria-describedby="delete-dialog-description"
+        >
+          <DialogTitle id="delete-dialog-title">Confirmation de suppression</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="delete-dialog-description">
+              Êtes-vous sûr de vouloir supprimer ce client ? Cette action est irréversible.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancelDelete} color="primary">
+              Annuler
+            </Button>
+            <Button onClick={handleConfirmDelete} color="error" variant="contained">
+              Supprimer
+            </Button>
+          </DialogActions>
+        </Dialog>
+     </Box>
+   );
+ };
 
 export default ClientsPage;
