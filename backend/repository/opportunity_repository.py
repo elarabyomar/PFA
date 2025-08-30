@@ -57,7 +57,10 @@ class OpportunityRepository:
 
     async def get_opportunity_by_id(self, opportunity_id: int) -> Optional[Opportunity]:
         """Get a single opportunity by ID"""
+        from sqlalchemy.orm import selectinload
         result = await self.session.execute(
-            select(Opportunity).where(Opportunity.id == opportunity_id)
+            select(Opportunity)
+            .options(selectinload(Opportunity.produit))
+            .where(Opportunity.id == opportunity_id)
         )
         return result.scalars().first()

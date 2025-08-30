@@ -1,0 +1,100 @@
+﻿Table,Colonne,Description,Valeurs Possibles,Clé Primaire,Clé Etrangère,Format
+compagnies,id,Identifiant technique,,TRUE,FALSE,SERIAL
+compagnies,code_cie,Code unique compagnie,,FALSE,FALSE,VARCHAR(10)
+compagnies,nom,Nom complet compagnie,,FALSE,FALSE,VARCHAR(255)
+compagnies,adresse,Adresse de la compagnie,,FALSE,FALSE,VARCHAR(255)
+compagnies,contact,Contact (téléphone/email),,FALSE,FALSE,VARCHAR(255)
+compagnies,actif,Statut actif/inactif,TRUE/FALSE,FALSE,FALSE,BOOLEAN
+clients,id,Identifiant technique client,,TRUE,FALSE,SERIAL
+clients,type_client,Type de client,PARTICULIER/SOCIETE,FALSE,FALSE,VARCHAR(20)
+clients,code_client,Code interne client,,FALSE,FALSE,VARCHAR(50)
+clients,adresse,Adresse client,,FALSE,FALSE,VARCHAR(255)
+clients,tel,Téléphone client,,FALSE,FALSE,VARCHAR(50)
+clients,email,Email client,,FALSE,FALSE,VARCHAR(100)
+clients,particulier_id,Identifiant particulier,,FALSE,TRUE,INT
+clients,societe_id,Identifiant societe,,FALSE,TRUE,INT
+particuliers,id,Identifiant particulier,,TRUE,FALSE,SERIAL
+societes,id,Identifiant societe,,TRUE,FALSE,SERIAL
+users,id,Identifiant utilisateur,,TRUE,FALSE,SERIAL
+users,nom,Nom de l'utilisateur,,FALSE,FALSE,VARCHAR(255)
+users,prenom,Prénom de l'utilisateur,,FALSE,FALSE,VARCHAR(255)
+users,poste,Poste ( Rôle ) de l'utilisateur,ADMINISTRATEUR/COLLABORATEUR,FALSE,FALSE,VARCHAR(20)
+users,motdepasse,Mdp de l'utilisateur,,FALSE,FALSE,VARCHAR(255)
+infos,user_id,Identifiant de l'utilisateur,,TRUE,TRUE,SERIAL
+infos,tel,Téléphone de l'utilisateur,,FALSE,FALSE,VARCHAR(50)
+infos,email,Email de l'utilisateur,,FALSE,FALSE,VARCHAR(100)
+infos,adresse,Adresse de l'utilisateur,,FALSE,FALSE,VARCHAR(255)
+infos,ville,Ville de l'utilisateur,,FALSE,FALSE,VARCHAR(255)
+branches,id,Identifiant technique,,TRUE,FALSE,SERIAL
+branches,code_branche,Code branche,,FALSE,FALSE,VARCHAR(10)
+branches,nom,Nom de la branche,,FALSE,FALSE,VARCHAR(255)
+produits,id,Identifiant technique,,TRUE,FALSE,SERIAL
+produits,nom,Nom du produit,,FALSE,FALSE,VARCHAR(255)
+produits,code_produit,Code interne produit,,FALSE,FALSE,VARCHAR(50)
+produits,compagnie_id,Lien vers compagnies,,FALSE,TRUE,INT
+produits,branche_id,Lien vers branches,,FALSE,TRUE,INT
+produits,description,Description produit,,FALSE,FALSE,TEXT
+garanties,id,Identifiant technique,,TRUE,FALSE,SERIAL
+garanties,nom,Nom de la garantie,,FALSE,FALSE,VARCHAR(255)
+garanties,produit_id,Lien vers produits,,FALSE,TRUE,INT
+garanties,compagnie_id,Lien vers compagnies,,FALSE,TRUE,INT
+garanties,commission_pct,Pourcentage de commission,0-100,FALSE,FALSE,"DECIMAL(5,2)"
+garanties,taxe_pct,Pourcentage de taxe,0-100,FALSE,FALSE,"DECIMAL(5,2)"
+garanties,description,Description garantie,,FALSE,FALSE,TEXT
+sous_graranties,id,Identifiant technique,,TRUE,FALSE,SERIAL
+sous_graranties,nom,Nom de la sous-garantie,,FALSE,FALSE,VARCHAR(255)
+sous_graranties,garantie_id,Lien vers garanties,,FALSE,TRUE,INT
+usage,id,Identifiant technique,,TRUE,FALSE,SERIAL
+usage,libelle,Libellé Usage,Usage A/ Usage F,FALSE,FALSE,VARCHAR(255)
+rdv,id,Identifiant technique,,TRUE,FALSE,SERIAL
+rdv,nom,Nom (type) de rendez-vous,REUNION/PROSPECTION,FALSE,FALSE,VARCHAR(255)
+marques,id,Identifiant technique,,TRUE,FALSE,SERIAL
+marques,nom,Nom (type) de marque,HONDA/MERCEDES,FALSE,FALSE,VARCHAR(255)
+carrosseries,id,Identifiant technique,,TRUE,FALSE,SERIAL
+carrosseries,nom,Nom (type) de carrosserie,SUV/BERLINE,FALSE,FALSE,VARCHAR(255)
+villes,id,Identifiant technique,,TRUE,FALSE,SERIAL
+villes,nom,Nom de ville,RABAT/CASA,FALSE,FALSE,VARCHAR(255)
+banques,id,Identifiant technique,,TRUE,FALSE,SERIAL
+banques,nom,Nom de banque,BMCE/CIH,FALSE,FALSE,VARCHAR(255)
+bonus_auto,id,Identifiant technique,,TRUE,FALSE,SERIAL
+bonus_auto,coeff,Coefficient du bonus,,FALSE,FALSE,VARCHAR(255)
+bonus_auto,taux,Taux,,FALSE,FALSE,"DECIMAL(4,2)"
+paiment,id,Identifiant technique,,TRUE,FALSE,SERIAL
+paiment,libelle,Mode de paiment,,FALSE,FALSE,VARCHAR(255)
+devis,id,Identifiant devis,,TRUE,FALSE,SERIAL
+devis,client_id,Lien vers client,,FALSE,TRUE,INT
+devis,utilisateur_id,Lien vers utilisateur,,FALSE,TRUE,INT
+devis,produit_id,Lien vers produit,,FALSE,TRUE,INT
+devis,date_creation,Date de création,YYYY-MM-DD,FALSE,FALSE,DATE
+devis,etat,Etat du devis,ex: Attente Tarif CIE,FALSE,FALSE,VARCHAR(50)
+devis,montant_estime,Montant estimé,,FALSE,FALSE,"DECIMAL(12,2)"
+devis,observations,Notes ou commentaires,,FALSE,FALSE,TEXT
+production,id,Identifiant technique production,,TRUE,FALSE,SERIAL
+production,client_id,Lien vers client,,FALSE,TRUE,INT
+production,compagnie_id,Lien vers compagnie,,FALSE,TRUE,INT
+production,produit_id,Lien vers produit,,FALSE,TRUE,INT
+production,num_police,Numéro de police unique,,FALSE,FALSE,VARCHAR(100)
+production,date_effet,Date de début du contrat,YYYY-MM-DD,FALSE,FALSE,DATE
+production,date_echeance,Date de fin de contrat,YYYY-MM-DD,FALSE,FALSE,DATE
+production,date_resiliation,Date de résiliation,YYYY-MM-DD,FALSE,FALSE,DATE
+production,prime_totale,Prime totale du contrat,,FALSE,FALSE,"DECIMAL(12,2)"
+production,acte,Type d'acte (ex: Affaire Nouvelle),,FALSE,FALSE,VARCHAR(50)
+production,etat,Etat du contrat,en cours / résilié / suspendu,FALSE,FALSE,VARCHAR(50)
+attestation,id,Identifiant technique attestation,,TRUE,FALSE,SERIAL
+attestation,compagnie_id,Lien vers compagnie,,FALSE,TRUE,INT
+attestation,utilisateur_id,Lien vers utilisateur,,FALSE,TRUE,INT
+attestation,date_livraison,Date de livraison,YYYY-MM-DD,FALSE,FALSE,DATE
+attestation,usage_libelle,Type d'usage,,FALSE,FALSE,VARCHAR(255)
+reglement,id,Identifiant technique,,TRUE,FALSE,SERIAL
+reglement,production_id,Lien vers production,,FALSE,TRUE,INT
+reglement,paiment_id,Lien vers mode de paiment,,FALSE,TRUE,INT
+reglement,date_reglement,Date de reglement,YYYY-MM-DD,FALSE,FALSE,DATE
+reglement,ref,Reference,,FALSE,FALSE,INT
+reglement,mode,Mode de paiment,,FALSE,FALSE,VARCHAR(255)
+agenda,id,Identifiant technique,,TRUE,FALSE,SERIAL
+agenda,utilisateur_id,Lien vers utilisateur,,FALSE,TRUE,INT
+agenda,rdv_id,Lien vers RDV,,FALSE,TRUE,INT
+agenda,objet,Objet du  journee,,FALSE,FALSE,VARCHAR(255)
+agenda,description,Description,,FALSE,FALSE,VARCHAR(255)
+agenda,date_debut,Date du debut,YYYY-MM-DD,FALSE,FALSE,DATE
+agenda,date_fin,Date du fin,YYYY-MM-DD,FALSE,FALSE,DATE

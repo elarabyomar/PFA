@@ -209,11 +209,11 @@ logger.info("✅ Document router included")
 # Add static file serving for uploaded documents
 try:
     # Create uploads directory if it doesn't exist
-    # Use the same path as the document controller (controller/uploads)
+    # Use the same path as the document controller (backend/uploads)
     import os
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    controller_dir = os.path.dirname(current_dir)
-    uploads_dir = os.path.join(controller_dir, "controller", "uploads")
+    backend_dir = os.path.dirname(current_dir)
+    uploads_dir = os.path.join(backend_dir, "uploads")
     
     if not os.path.exists(uploads_dir):
         os.makedirs(uploads_dir)

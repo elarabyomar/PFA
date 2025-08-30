@@ -50,6 +50,15 @@ class ContractRepository:
             await self.session.commit()
             await self.session.refresh(contract)
             
+            # Load the product relationship if it exists
+            if contract.idProduit:
+                try:
+                    from sqlalchemy.orm import selectinload
+                    await self.session.refresh(contract, attribute_names=['produit'])
+                    logger.info(f"✅ Loaded product relationship for contract {contract.id}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to load product relationship for contract {contract.id}: {e}")
+            
             logger.info(f"✅ Contract created successfully with ID: {contract.id}")
             return contract
             
@@ -67,6 +76,15 @@ class ContractRepository:
                     setattr(contract, key, value)
             await self.session.commit()
             await self.session.refresh(contract)
+            
+            # Load the product relationship if it exists
+            if contract.idProduit:
+                try:
+                    await self.session.refresh(contract, attribute_names=['produit'])
+                    logger.info(f"✅ Loaded product relationship for updated contract {contract.id}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to load product relationship for updated contract {contract.id}: {e}")
+        
         return contract
 
     async def delete_contract(self, contract_id: int) -> bool:

@@ -20,20 +20,37 @@ class ContractService:
     async def get_contracts_by_client(self, client_id: int) -> List[ContractResponse]:
         """Get all contracts for a specific client"""
         contracts = await self.repository.get_contracts_by_client(client_id)
-        return [ContractResponse(**{
-            'id': contract.id,
-            'numPolice': contract.numPolice,
-            'typeContrat': contract.typeContrat,
-            'dateDebut': contract.dateDebut,
-            'dateFin': contract.dateFin,
-            'idClient': contract.idClient,
-            'idProduit': contract.idProduit,
-            'produit': {
-                'id': contract.produit.id,
-                'libelle': contract.produit.libelle,
-                'codeProduit': contract.produit.codeProduit
-            } if contract.produit else None
-        }) for contract in contracts]
+        
+        # Load product information for each contract
+        contract_responses = []
+        for contract in contracts:
+            produit_data = None
+            if hasattr(contract, 'produit') and contract.produit:
+                try:
+                    produit_data = {
+                        'id': contract.produit.id,
+                        'libelle': contract.produit.libelle,
+                        'codeProduit': contract.produit.codeProduit
+                    }
+                    logger.info(f"✅ Loaded product data from relationship for contract {contract.id}: {produit_data}")
+                except Exception as produit_error:
+                    logger.warning(f"⚠️ Failed to load product data from relationship for contract {contract.id}: {produit_error}")
+                    produit_data = None
+            elif contract.idProduit:
+                logger.warning(f"⚠️ Contract {contract.id} has idProduit {contract.idProduit} but no produit relationship loaded")
+            
+            contract_responses.append(ContractResponse(**{
+                'id': contract.id,
+                'numPolice': contract.numPolice,
+                'typeContrat': contract.typeContrat,
+                'dateDebut': contract.dateDebut,
+                'dateFin': contract.dateFin,
+                'idClient': contract.idClient,
+                'idProduit': contract.idProduit,
+                'produit': produit_data
+            }))
+        
+        return contract_responses
 
     async def create_contract(self, contract_data: ContractCreate) -> ContractResponse:
         """Create a new contract"""
@@ -47,6 +64,19 @@ class ContractService:
         
         contract = await self.repository.create_contract(contract_data.dict())
         
+        # Load product information for the created contract
+        produit_data = None
+        if hasattr(contract, 'produit') and contract.produit:
+            try:
+                produit_data = {
+                    'id': contract.produit.id,
+                    'libelle': contract.produit.libelle,
+                    'codeProduit': contract.produit.codeProduit
+                }
+            except Exception as produit_error:
+                logger.warning(f"⚠️ Failed to load product data from relationship for created contract: {produit_error}")
+                produit_data = None
+        
         return ContractResponse(**{
             'id': contract.id,
             'numPolice': contract.numPolice,
@@ -55,17 +85,26 @@ class ContractService:
             'dateFin': contract.dateFin,
             'idClient': contract.idClient,
             'idProduit': contract.idProduit,
-            'produit': {
-                'id': contract.produit.id,
-                'libelle': contract.produit.libelle,
-                'codeProduit': contract.produit.codeProduit
-            } if contract.produit else None
+            'produit': produit_data
         })
 
     async def update_contract(self, contract_id: int, contract_data: ContractUpdate) -> Optional[ContractResponse]:
         """Update an existing contract"""
         contract = await self.repository.update_contract(contract_id, contract_data.dict(exclude_unset=True))
         if contract:
+            # Load product information for the updated contract
+            produit_data = None
+            if hasattr(contract, 'produit') and contract.produit:
+                try:
+                    produit_data = {
+                        'id': contract.produit.id,
+                        'libelle': contract.produit.libelle,
+                        'codeProduit': contract.produit.codeProduit
+                    }
+                except Exception as produit_error:
+                    logger.warning(f"⚠️ Failed to load product data from relationship for updated contract: {produit_error}")
+                    produit_data = None
+            
             return ContractResponse(**{
                 'id': contract.id,
                 'numPolice': contract.numPolice,
@@ -74,11 +113,7 @@ class ContractService:
                 'dateFin': contract.dateFin,
                 'idClient': contract.idClient,
                 'idProduit': contract.idProduit,
-                'produit': {
-                    'id': contract.produit.id,
-                    'libelle': contract.produit.libelle,
-                    'codeProduit': contract.produit.codeProduit
-                } if contract.produit else None
+                'produit': produit_data
             })
         return None
 
@@ -90,6 +125,19 @@ class ContractService:
         """Get a single contract by ID"""
         contract = await self.repository.get_contract_by_id(contract_id)
         if contract:
+            # Load product information for the contract
+            produit_data = None
+            if hasattr(contract, 'produit') and contract.produit:
+                try:
+                    produit_data = {
+                        'id': contract.produit.id,
+                        'libelle': contract.produit.libelle,
+                        'codeProduit': contract.produit.codeProduit
+                    }
+                except Exception as produit_error:
+                    logger.warning(f"⚠️ Failed to load product data from relationship for contract {contract_id}: {produit_error}")
+                    produit_data = None
+            
             return ContractResponse(**{
                 'id': contract.id,
                 'numPolice': contract.numPolice,
@@ -98,11 +146,7 @@ class ContractService:
                 'dateFin': contract.dateFin,
                 'idClient': contract.idClient,
                 'idProduit': contract.idProduit,
-                'produit': {
-                    'id': contract.produit.id,
-                    'libelle': contract.produit.libelle,
-                    'codeProduit': contract.produit.codeProduit
-                } if contract.produit else None
+                'produit': produit_data
             })
         return None
 
@@ -136,6 +180,25 @@ class ContractService:
                 'idClient': opportunity.idClient,  # From opportunity
                 'idProduit': opportunity.idProduit  # ONLY thing taken from opportunity
             }
+            
+            # Load product details from the opportunity to include in the response
+            produit_data = None
+            if opportunity.idProduit:
+                try:
+                    # Since we don't have a produit repository, we'll get the product info from the opportunity
+                    # The opportunity should have the product relationship loaded
+                    if hasattr(opportunity, 'produit') and opportunity.produit:
+                        produit_data = {
+                            'id': opportunity.produit.id,
+                            'libelle': opportunity.produit.libelle,
+                            'codeProduit': opportunity.produit.codeProduit
+                        }
+                        logger.info(f"✅ Loaded product data from opportunity: {produit_data}")
+                    else:
+                        logger.warning(f"⚠️ Opportunity has idProduit {opportunity.idProduit} but no product relationship loaded")
+                except Exception as produit_error:
+                    logger.warning(f"⚠️ Failed to load product data from opportunity: {produit_error}")
+                    produit_data = None
             
             # Ensure all required fields are present and valid
             logger.info(f"🔍 Validating contract data:")
@@ -174,10 +237,19 @@ class ContractService:
             contract = await self.repository.create_contract(contract_data_from_opportunity)
             logger.info(f"✅ Contract created successfully: {contract}")
             
-            # Optionally, you could update the opportunity status here
-            # For example, mark it as "Transformed" or "Closed"
+            # Update the opportunity status to mark it as transformed
+            try:
+                from repository.opportunity_repository import OpportunityRepository
+                opportunity_repo = OpportunityRepository(self.repository.session)
+                await opportunity_repo.update_opportunity(opportunity_id, {'etape': 'Transformée'})
+                logger.info(f"✅ Updated opportunity {opportunity_id} status to 'Transformée'")
+            except Exception as update_error:
+                logger.warning(f"⚠️ Failed to update opportunity status: {update_error}")
+                # Don't fail the transformation if status update fails
             
             logger.info(f"✅ Successfully transformed opportunity {opportunity_id} to contract {contract.id}")
+            
+            # Product data was already loaded from the opportunity above
             
             return ContractResponse(**{
                 'id': contract.id,
@@ -187,11 +259,7 @@ class ContractService:
                 'dateFin': contract.dateFin,
                 'idClient': contract.idClient,
                 'idProduit': contract.idProduit,
-                'produit': {
-                    'id': contract.produit.id,
-                    'libelle': contract.produit.libelle,
-                    'codeProduit': contract.produit.codeProduit
-                } if contract.produit else None
+                'produit': produit_data
             })
             
         except Exception as e:
