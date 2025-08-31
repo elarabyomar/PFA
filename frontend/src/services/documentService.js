@@ -20,11 +20,21 @@ export const documentService = {
   },
 
   // Upload a document file
-  uploadDocument: async (file, clientId = null) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (clientId) {
-      formData.append('client_id', clientId);
+  uploadDocument: async (fileOrFormData, clientId = null) => {
+    let formData;
+    
+    if (fileOrFormData instanceof FormData) {
+      // If FormData is passed directly, use it
+      formData = fileOrFormData;
+    } else {
+      // If file object is passed, create FormData
+      formData = new FormData();
+      formData.append('file', fileOrFormData);
+      if (clientId) {
+        formData.append('client_id', clientId);
+        formData.append('entity_type', 'CLIENT');
+        formData.append('entity_id', clientId);
+      }
     }
     
     const response = await api.post('/api/documents/upload', formData, {
@@ -38,6 +48,21 @@ export const documentService = {
   // Delete a document
   deleteDocument: async (documentId) => {
     const response = await api.delete(`/api/documents/${documentId}`);
+    return response.data;
+  },
+
+  // Get documents by entity type and ID
+  getDocumentsByEntity: async (entityType, entityId) => {
+    const response = await api.get(`/api/documents/entity/${entityType}/${entityId}`);
+    return response.data;
+  },
+
+  // Link document to entity
+  linkDocumentToEntity: async (documentId, entityType, entityId) => {
+    const response = await api.put(`/api/documents/${documentId}/link`, {
+      typeEntite: entityType,
+      idEntite: entityId
+    });
     return response.data;
   }
 };

@@ -34,7 +34,10 @@ class OpportunityService:
                 'etape': opp.etape,
                 'dateCreation': opp.dateCreation,
                 'dateEcheance': opp.dateEcheance,
-                'description': opp.description
+                'description': opp.description,
+                'transformed': opp.transformed,
+                'idContrat': opp.idContrat,
+                'dateTransformation': opp.dateTransformation
             }
             
             # Add produit data if available
@@ -44,6 +47,80 @@ class OpportunityService:
                     'codeProduit': opp.produit.codeProduit,
                     'libelle': opp.produit.libelle,
                     'description': opp.produit.description
+                }
+            
+            # Add contract data if available
+            if hasattr(opp, 'contract') and opp.contract:
+                opp_dict['contract'] = {
+                    'id': opp.contract.id,
+                    'numPolice': opp.contract.numPolice,
+                    'typeContrat': opp.contract.typeContrat,
+                    'dateDebut': opp.contract.dateDebut,
+                    'dateFin': opp.contract.dateFin
+                }
+            
+            opportunity_responses.append(OpportunityResponse(**opp_dict))
+        
+        return opportunity_responses
+
+    async def get_all_opportunities(self) -> List[OpportunityResponse]:
+        """Get all opportunities with client information"""
+        opportunities = await self.repository.get_all_opportunities()
+        opportunity_responses = []
+        
+        for opp in opportunities:
+            # Convert to dict first to avoid async relationship issues
+            opp_dict = {
+                'id': opp.id,
+                'idClient': opp.idClient,
+                'idUser': opp.idUser,
+                'idProduit': opp.idProduit,
+                'budgetEstime': opp.budgetEstime,
+                'origine': opp.origine,
+                'etape': opp.etape,
+                'dateCreation': opp.dateCreation,
+                'dateEcheance': opp.dateEcheance,
+                'description': opp.description,
+                'transformed': opp.transformed,
+                'idContrat': opp.idContrat,
+                'dateTransformation': opp.dateTransformation
+            }
+            
+            # Add produit data if available
+            if hasattr(opp, 'produit') and opp.produit:
+                opp_dict['produit'] = {
+                    'id': opp.produit.id,
+                    'codeProduit': opp.produit.codeProduit,
+                    'libelle': opp.produit.libelle,
+                    'description': opp.produit.description
+                }
+            
+            # Add client data if available
+            if hasattr(opp, 'client') and opp.client:
+                # Compute client name based on type
+                client_nom = None
+                if opp.client.typeClient == 'PARTICULIER' and hasattr(opp.client, 'particulier') and opp.client.particulier:
+                    client_nom = f"{opp.client.particulier.nom} {opp.client.particulier.prenom}"
+                elif opp.client.typeClient == 'SOCIETE' and hasattr(opp.client, 'societe') and opp.client.societe:
+                    client_nom = opp.client.societe.nom
+                else:
+                    client_nom = opp.client.codeClient  # Fallback to code if no name found
+                
+                opp_dict['client'] = {
+                    'id': opp.client.id,
+                    'codeClient': opp.client.codeClient,
+                    'typeClient': opp.client.typeClient,
+                    'nom': client_nom
+                }
+            
+            # Add contract data if available
+            if hasattr(opp, 'contract') and opp.contract:
+                opp_dict['contract'] = {
+                    'id': opp.contract.id,
+                    'numPolice': opp.contract.numPolice,
+                    'typeContrat': opp.contract.typeContrat,
+                    'dateDebut': opp.contract.dateDebut,
+                    'dateFin': opp.contract.dateFin
                 }
             
             opportunity_responses.append(OpportunityResponse(**opp_dict))
@@ -69,7 +146,10 @@ class OpportunityService:
             'etape': opportunity.etape,
             'dateCreation': opportunity.dateCreation,
             'dateEcheance': opportunity.dateEcheance,
-            'description': opportunity.description
+            'description': opportunity.description,
+            'transformed': opportunity.transformed,
+            'idContrat': opportunity.idContrat,
+            'dateTransformation': opportunity.dateTransformation
         }
         
         return OpportunityResponse(**opportunity_dict)
@@ -89,7 +169,10 @@ class OpportunityService:
                 'etape': opportunity.etape,
                 'dateCreation': opportunity.dateCreation,
                 'dateEcheance': opportunity.dateEcheance,
-                'description': opportunity.description
+                'description': opportunity.description,
+                'transformed': opportunity.transformed,
+                'idContrat': opportunity.idContrat,
+                'dateTransformation': opportunity.dateTransformation
             }
             return OpportunityResponse(**opportunity_dict)
         return None
@@ -113,7 +196,10 @@ class OpportunityService:
                 'etape': opportunity.etape,
                 'dateCreation': opportunity.dateCreation,
                 'dateEcheance': opportunity.dateEcheance,
-                'description': opportunity.description
+                'description': opportunity.description,
+                'transformed': opportunity.transformed,
+                'idContrat': opportunity.idContrat,
+                'dateTransformation': opportunity.dateTransformation
             }
             return OpportunityResponse(**opportunity_dict)
         return None

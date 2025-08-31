@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator
 from typing import Optional, Union
 from datetime import date, datetime
+from decimal import Decimal
 import logging
 
 # Configure logging
@@ -18,6 +19,9 @@ class ContractBase(BaseModel):
     dateFin: Optional[date] = None
     idClient: int
     idProduit: Optional[int] = None
+    idCompagnie: Optional[int] = None
+    prime: Optional[Decimal] = None
+    idTypeDuree: Optional[int] = None
     
     @field_validator('dateDebut', 'dateFin', mode='before')
     @classmethod
@@ -50,12 +54,22 @@ class ContractUpdate(BaseModel):
     typeContrat: Optional[str] = None
     dateFin: Optional[date] = None
     idProduit: Optional[int] = None
+    idCompagnie: Optional[int] = None
+    prime: Optional[Decimal] = None
+    idTypeDuree: Optional[int] = None
 
 class OpportunityTransformRequest(BaseModel):
     """DTO for transforming opportunity to contract"""
     typeContrat: str = "Duree ferme"
+    dateDebut: date  # Required field for transformation
     dateFin: date  # Required field for transformation
+    prime: Optional[Decimal] = None
+    idCompagnie: Optional[int] = None
+    idTypeDuree: Optional[int] = None
 
 class ContractResponse(ContractBase):
     id: int
     produit: Optional[dict] = None  # Include produit relationship data
+    compagnie: Optional[dict] = None  # Include compagnie relationship data
+    duree: Optional[dict] = None  # Include duree relationship data
+    client: Optional[dict] = None  # Include client relationship data

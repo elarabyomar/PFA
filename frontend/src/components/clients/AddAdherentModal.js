@@ -268,7 +268,7 @@ const AddAdherentModal = ({
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
-            label="Numéro d'immatriculation"
+                              label="Numéro d&apos;immatriculation"
             value={assureSanteData.numImmatriculation}
             onChange={(e) => handleAssureSanteChange('numImmatriculation', e.target.value)}
             fullWidth

@@ -47,11 +47,18 @@ class ClientRepository:
                     Client.tel.ilike(f"%{search}%"),
                     Client.email.ilike(f"%{search}%"),
                     Client.typeClient.ilike(f"%{search}%"),
-
                     Client.importance.ilike(f"%{search}%"),
-                    Client.budget.ilike(f"%{search}%"),
                     Client.proba.ilike(f"%{search}%")
                 )
+                
+                # Handle budget search separately since it's now numeric
+                try:
+                    budget_value = float(search)
+                    search_filter = or_(search_filter, Client.budget == budget_value)
+                except (ValueError, TypeError):
+                    # If search is not a valid number, skip budget search
+                    pass
+                
                 query = query.where(search_filter)
                 logger.info("✅ Search filter applied")
             

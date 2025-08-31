@@ -47,3 +47,11 @@ class Branche(Base):
     # Removed description as it doesn't exist in the actual database structure
     
     # Relationships - will be added later if needed
+
+class Duree(Base):
+    __tablename__ = 'duree'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    codeDuree = Column(String(50), unique=True, nullable=False)  # Code type de duree
+    libelle = Column(String(50), nullable=False)  # Type de duree
+    nbMois = Column(Integer, nullable=False)  # Nombre de mois

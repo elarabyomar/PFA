@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, Date, DateTime, ForeignKey, LargeBinary, MetaData
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import relationship
 import logging
 
 # Configure logging
@@ -18,15 +18,16 @@ class Document(Base):
     __tablename__ = 'documents'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    typeEntite = Column(String(255))  # Type d'entité (societé, particulier..)
-    idEntite = Column(Integer, ForeignKey('clients.id'))  # ID Entité, FK to clients
+    typeEntite = Column(String(255))  # Type d'entité (societé, particulier, contrat..)
+    idEntite = Column(Integer, nullable=True)  # ID Entité - can be client ID, contract ID, etc.
     idDocType = Column(Integer, nullable=True)  # Id de type de doc (logo, CIN, Permis..) - Optional for now
     fichierNom = Column(String(255))  # Nom du fichier
     fichierChemin = Column(String(255))  # Chemin du fichier
     instantTele = Column(DateTime)  # Instant de telechargement
     
-    # Relationship - temporarily removed to fix SQLAlchemy initialization
+    # Relationships - we'll handle these dynamically based on typeEntite
     # client = relationship("Client", foreign_keys=[idEntite])
+    # contract = relationship("Contract", foreign_keys=[idEntite])
 
 class Adherent(Base):
     __tablename__ = 'adherents_contrat'

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Import models to register them with SQLAlchemy
 logger.info("📦 Importing models...")
+
 try:
     from model.user import User
     logger.info("✅ User model imported")
@@ -32,6 +33,14 @@ try:
     logger.info("✅ Client models imported")
 except Exception as e:
     logger.error(f"❌ Failed to import Client models: {e}")
+    raise
+
+# Now import reference models after client models are imported
+try:
+    from model.reference import Compagnie, Banque, Ville, Branche, Duree
+    logger.info("✅ Reference models imported")
+except Exception as e:
+    logger.error(f"❌ Failed to import Reference models: {e}")
     raise
 
 try:
@@ -78,12 +87,7 @@ except Exception as e:
 
 
 
-try:
-    from model.reference import Compagnie, Banque, Ville, Branche
-    logger.info("✅ Reference models imported")
-except Exception as e:
-    logger.error(f"❌ Failed to import Reference models: {e}")
-    raise
+
 
 # Check SQLAlchemy model registration
 logger.info("🔍 Checking SQLAlchemy model registration...")
@@ -118,6 +122,7 @@ from controller.adherent_controller import router as adherent_router
 from controller.csv_controller import router as csv_router
 
 from controller.produit_controller import router as produit_router
+from controller.reference_controller import router as reference_router
 
 app = FastAPI(
     title="API d'Authentification",
@@ -265,6 +270,11 @@ logger.info("✅ CSV adherents router included")
 logger.info("📦 Including produit router...")
 app.include_router(produit_router)
 logger.info("✅ Produit router included")
+
+# Inclure les routes de gestion des références
+logger.info("📦 Including reference router...")
+app.include_router(reference_router, prefix="/api/references")
+logger.info("✅ Reference router included")
 
 # Log all registered routes
 logger.info("🔍 Logging all registered routes...")

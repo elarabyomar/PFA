@@ -408,10 +408,13 @@ const ClientInfoModal = ({
     const cleanedData = { ...formData };
     
     // Convert empty strings to null for numeric fields
-    const numericFields = ['nombreEnfants'];
+    const numericFields = ['nombreEnfants', 'budget'];
     numericFields.forEach(field => {
       if (cleanedData[field] === '') {
         cleanedData[field] = null;
+      } else if (field === 'budget' && cleanedData[field]) {
+        // Convert budget to number if it's not empty
+        cleanedData[field] = parseFloat(cleanedData[field]);
       }
     });
     
@@ -430,6 +433,9 @@ const ClientInfoModal = ({
       societeNumericFields.forEach(field => {
         if (cleanedData.societe[field] === '') {
           cleanedData.societe[field] = null;
+        } else if (field === 'capital' && cleanedData.societe[field]) {
+          // Convert capital to number if it's not empty
+          cleanedData.societe[field] = parseFloat(cleanedData.societe[field]);
         }
       });
       
@@ -810,7 +816,7 @@ const ClientInfoModal = ({
                 <Grid item xs={12} md={4}>
                   <TextField
                     fullWidth
-                    label="Nombre d'Enfants"
+                    label="Nombre d&apos;Enfants"
                     type="number"
                     value={formData.nombreEnfants}
                     onChange={(e) => handleInputChange('nombreEnfants', e.target.value)}
@@ -985,7 +991,7 @@ const ClientInfoModal = ({
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    label="Secteur d'activité"
+                    label="Secteur d&apos;activité"
                     value={formData.societe.secteurActivite}
                     onChange={(e) => handleInputChange('societe.secteurActivite', e.target.value)}
                   />

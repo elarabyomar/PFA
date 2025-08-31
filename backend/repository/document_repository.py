@@ -142,3 +142,45 @@ class DocumentRepository:
             logger.error(f"❌ DocumentRepository.delete_document() failed: {str(e)}")
             await self.session.rollback()
             raise
+
+    async def get_documents_by_entity(self, entity_type: str, entity_id: int) -> List[Document]:
+        """Get all documents for a specific entity (client, contract, etc.)"""
+        logger.info(f"🔍 DocumentRepository.get_documents_by_entity() called for entity_type: {entity_type}, entity_id: {entity_id}")
+        try:
+            result = await self.session.execute(
+                select(Document).where(
+                    and_(
+                        Document.typeEntite == entity_type,
+                        Document.idEntite == entity_id
+                    )
+                )
+            )
+            documents = result.scalars().all()
+            logger.info(f"✅ Found {len(documents)} documents for {entity_type} {entity_id}")
+            return documents
+        except Exception as e:
+            logger.error(f"❌ DocumentRepository.get_documents_by_entity() failed: {str(e)}")
+            raise
+
+    async def link_document_to_entity(self, document_id: int, entity_type: str, entity_id: int) -> bool:
+        """Link a document to an entity"""
+        logger.info(f"🔍 DocumentRepository.link_document_to_entity() called for document_id: {document_id}, entity_type: {entity_type}, entity_id: {entity_id}")
+        try:
+            result = await self.session.execute(
+                select(Document).where(Document.id == document_id)
+            )
+            document = result.scalar_one_or_none()
+            
+            if document:
+                document.typeEntite = entity_type
+                document.idEntite = entity_id
+                await self.session.commit()
+                logger.info(f"✅ Document {document_id} linked to {entity_type} {entity_id}")
+                return True
+            else:
+                logger.warning(f"⚠️ Document {document_id} not found")
+                return False
+        except Exception as e:
+            logger.error(f"❌ DocumentRepository.link_document_to_entity() failed: {str(e)}")
+            await self.session.rollback()
+            raise

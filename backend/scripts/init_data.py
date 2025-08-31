@@ -58,7 +58,7 @@ try:
     logger.info("✅ Adherent models imported successfully")
     from model.client_relation import TypeRelation
     logger.info("✅ Client relation models imported successfully")
-    from model.reference import Compagnie, Banque, Ville, Branche
+    from model.reference import Compagnie, Banque, Ville, Branche, Duree
     logger.info("✅ Reference models imported successfully")
     logger.info("✅ All models imported successfully")
 except Exception as e:
@@ -292,6 +292,40 @@ async def init_data():
                         logger.info("ℹ️ All carrosseries already exist, no new ones created")
                 except Exception as e:
                     logger.error(f"❌ Error creating carrosseries: {e}")
+                    logger.error(f"❌ Error type: {type(e).__name__}")
+                    import traceback
+                    logger.error(f"❌ Traceback: {traceback.format_exc()}")
+                    raise
+                
+                # Initialize durees (duration types) - essential for contracts
+                logger.info("⏱️ Creating durees...")
+                try:
+                    durees_data = [
+                        ("MENSUEL", "Mensuel", 1),
+                        ("TRIMESTRIEL", "Trimestriel", 3),
+                        ("SEMESTRIEL", "Semestriel", 6),
+                        ("ANNUEL", "Annuel", 12)
+                    ]
+                    
+                    durees_created = 0
+                    for code_duree, libelle, nb_mois in durees_data:
+                        # Check if duree already exists
+                        if not await check_data_exists(db, Duree, "codeDuree", code_duree):
+                            duree = Duree(codeDuree=code_duree, libelle=libelle, nbMois=nb_mois)
+                            logger.debug(f"📝 Adding new duree: {code_duree} - {libelle} ({nb_mois} mois)")
+                            db.add(duree)
+                            durees_created += 1
+                        else:
+                            logger.debug(f"ℹ️ Duree {code_duree} already exists, skipping")
+                    
+                    if durees_created > 0:
+                        logger.info("💾 Committing new durees to database...")
+                        await db.commit()
+                        logger.info(f"✅ Successfully created {durees_created} new durees")
+                    else:
+                        logger.info("ℹ️ All durees already exist, no new ones created")
+                except Exception as e:
+                    logger.error(f"❌ Error creating durees: {e}")
                     logger.error(f"❌ Error type: {type(e).__name__}")
                     import traceback
                     logger.error(f"❌ Traceback: {traceback.format_exc()}")
@@ -571,6 +605,7 @@ async def init_data():
                 logger.info(f"   - {banques_created} banques")
                 logger.info(f"   - {marques_created} marques")
                 logger.info(f"   - {carrosseries_created} carrosseries")
+                logger.info(f"   - {durees_created} durees")
                 logger.info(f"   - {produits_created} produits")
                 logger.info(f"   - {garanties_created} garanties")
                 logger.info(f"   - {sous_garanties_created} sous_garanties")

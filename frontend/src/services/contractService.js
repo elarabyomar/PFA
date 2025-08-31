@@ -1,6 +1,43 @@
 import api from './api';
 
 export const contractService = {
+  // Get all contracts from all clients
+  async getAllContracts() {
+    try {
+      const response = await api.get('/api/contracts/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all contracts:', error);
+      throw error;
+    }
+  },
+
+  // Get contracts with pagination, search, and filters
+  async getContracts(params = {}) {
+    try {
+      const {
+        skip = 0,
+        limit = 50,
+        search = '',
+        typeContrat = '',
+        idTypeDuree = ''
+      } = params;
+      
+      const queryParams = new URLSearchParams();
+      if (skip > 0) queryParams.append('skip', skip);
+      if (limit !== 50) queryParams.append('limit', limit);
+      if (search) queryParams.append('search', search);
+      if (typeContrat) queryParams.append('typeContrat', typeContrat);
+      if (idTypeDuree) queryParams.append('idTypeDuree', idTypeDuree);
+      
+      const response = await api.get(`/api/contracts/?${queryParams.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching contracts:', error);
+      throw error;
+    }
+  },
+
   // Get contracts for a specific client
   async getContractsByClient(clientId) {
     try {
@@ -57,9 +94,28 @@ export const contractService = {
   },
 
   // Transform opportunity to contract
-  async transformOpportunityToContract(opportunityId, contractData) {
+  async transformOpportunityToContract(opportunityId, contractData, documents = []) {
     try {
-      const response = await api.post(`/api/contracts/transform-opportunity/${opportunityId}`, contractData);
+      // Create FormData to handle file uploads
+      const formData = new FormData();
+      
+      // Add contract data
+      Object.keys(contractData).forEach(key => {
+        if (contractData[key] !== null && contractData[key] !== undefined && contractData[key] !== '') {
+          formData.append(key, contractData[key]);
+        }
+      });
+      
+      // Add documents
+      documents.forEach((doc, index) => {
+        formData.append(`document_${index}`, doc);
+      });
+      
+      const response = await api.post(`/api/contracts/transform-opportunity/${opportunityId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       console.error('Error transforming opportunity to contract:', error);

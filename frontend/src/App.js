@@ -15,6 +15,8 @@ import RoleManagementPage from './pages/admin/RoleManagementPage';
 import UserManagementPage from './pages/admin/UserManagementPage';
 import DatabaseExplorerPage from './pages/admin/DatabaseExplorerPage';
 import ClientsPage from './pages/clients/ClientsPage';
+import OpportunitiesPage from './pages/opportunities/OpportunitiesPage';
+import ContractsPage from './pages/contracts/ContractsPage';
 
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
@@ -87,6 +89,28 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <ClientsPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/opportunities"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <OpportunitiesPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/contracts"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <ContractsPage />
               </MainLayout>
             </ProtectedRoute>
           }

@@ -12,6 +12,45 @@ export const opportunityService = {
     }
   },
 
+  // Get all opportunities from all clients
+  async getAllOpportunities() {
+    try {
+      const response = await api.get('/api/opportunities/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all opportunities:', error);
+      throw error;
+    }
+  },
+
+  // Get opportunities with pagination, search, and filters
+  async getOpportunities(params = {}) {
+    try {
+      const {
+        skip = 0,
+        limit = 50,
+        search = '',
+        etape = '',
+        origine = '',
+        transformed = ''
+      } = params;
+      
+      const queryParams = new URLSearchParams();
+      if (skip > 0) queryParams.append('skip', skip);
+      if (limit !== 50) queryParams.append('limit', limit);
+      if (search) queryParams.append('search', search);
+      if (etape) queryParams.append('etape', etape);
+      if (origine) queryParams.append('origine', origine);
+      if (transformed !== '') queryParams.append('transformed', transformed);
+      
+      const response = await api.get(`/api/opportunities/?${queryParams.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching opportunities:', error);
+      throw error;
+    }
+  },
+
   // Create a new opportunity
   async createOpportunity(opportunityData) {
     try {

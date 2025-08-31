@@ -257,18 +257,22 @@ class ClientService:
         """Get all available importance levels"""
         return self.repository.get_client_importance_levels()
 
-    def format_budget(self, budget: str) -> str:
+    def format_budget(self, budget) -> str:
         """Format budget value for display"""
         if not budget:
             return "0 DH"
         
         try:
-            # Try to parse as number and format
-            budget_num = float(budget)
+            # Handle both string and Decimal types
+            if hasattr(budget, 'quantize'):  # Decimal type
+                budget_num = float(budget)
+            else:
+                # Try to parse as number and format
+                budget_num = float(budget)
             return f"{budget_num:,.2f} DH"
-        except ValueError:
+        except (ValueError, TypeError):
             # If not a number, return as is
-            return budget
+            return str(budget) if budget else "0 DH"
 
     def format_proba(self, proba: str) -> str:
         """Format probability value for display"""

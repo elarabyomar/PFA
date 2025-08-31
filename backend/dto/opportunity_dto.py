@@ -22,6 +22,9 @@ class OpportunityBase(BaseModel):
     dateCreation: Optional[date] = None
     dateEcheance: Optional[date] = None
     description: Optional[str] = None
+    transformed: Optional[bool] = False
+    idContrat: Optional[int] = None
+    dateTransformation: Optional[date] = None
 
 class OpportunityCreate(OpportunityBase):
     pass
@@ -33,7 +36,12 @@ class OpportunityUpdate(BaseModel):
     etape: Optional[str] = None
     dateEcheance: Optional[date] = None
     description: Optional[str] = None
+    transformed: Optional[bool] = None
+    idContrat: Optional[int] = None
+    dateTransformation: Optional[date] = None
 
 class OpportunityResponse(OpportunityBase):
     id: int
     produit: Optional[dict] = None  # Include produit relationship data
+    client: Optional[dict] = None   # Include client relationship data
+    contract: Optional[dict] = None  # Include contract relationship data if transformed

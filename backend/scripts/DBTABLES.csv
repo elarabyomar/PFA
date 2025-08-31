@@ -13,7 +13,7 @@ clients,tel,Téléphone client,,FALSE,FALSE,VARCHAR(50),MASTER,Téléphone,
 clients,email,Email client,,FALSE,FALSE,VARCHAR(100),MASTER,Email,
 clients,statut,Statut du client,Opportunite/vrai client/ ancient client,FALSE,FALSE,VARCHAR(255),MASTER,Statut,
 clients,importance,Importance du client,,FALSE,FALSE,VARCHAR(255),MASTER,Importance,
-clients,budget,Budget du client,,FALSE,FALSE,VARCHAR(255),MASTER,Budget,
+clients,budget,Budget du client,,FALSE,FALSE,"DECIMAL(15,2)",MASTER,Budget,
 clients,proba,Proba de realisation,,FALSE,FALSE,VARCHAR(255),MASTER,Probabilité,
 clients_relations,id,Identifiant technique,,TRUE,FALSE,SERIAL,MASTER,ID,
 clients_relations,idClientPrincipal,ID du client source de la relation,,FALSE,TRUE,INT,MASTER,Client Principal,clients(id)
@@ -99,7 +99,7 @@ societes,nomContactPrincipal,Nom du contact principal au sein de la société.,,
 societes,fonctionContactPrincipal,Fonction du contact principal au sein de la société.,,FALSE,FALSE,VARCHAR(255),MASTER,Fonction Contact Principal,
 documents,id,Identifant document,,TRUE,FALSE,SERIAL,MASTER,ID,
 documents,typeEntite,"Type d'entité (societé, particulier.. )",,FALSE,FALSE,VARCHAR(255),MASTER,Type Entité,
-documents,idEntite,Identifiant d'entité,,FALSE,TRUE,INT,MASTER,ID Entité,clients(id)
+documents,idEntite,Identifiant d'entité,,FALSE,FALSE,INT,MASTER,ID Entité,
 documents,idDocType,"Id de type de doc ( logo, CIN, Permis.. )",,FALSE,TRUE,INT,MASTER,Type Document,document_type(id)
 documents,fichierNom,Nom du fichier,,FALSE,FALSE,VARCHAR(255),MASTER,Nom Fichier,
 documents,fichierChemin,Chemin du fichier,,FALSE,FALSE,VARCHAR(255),MASTER,Chemin Fichier,
@@ -197,6 +197,10 @@ bonus_auto,taux,Taux,,FALSE,FALSE,"DECIMAL(4,2)",REFERENCE,Taux,
 paiment,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID,
 paiment,codePaiment,Code mode de paiment,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Paiement,
 paiment,libelle,Mode de paiment,,FALSE,FALSE,VARCHAR(255),REFERENCE,Mode Paiement,
+duree,id,Identifiant technique,,TRUE,FALSE,SERIAL,REFERENCE,ID,
+duree,codeDuree,Code type de duree,,FALSE,FALSE,VARCHAR(50),REFERENCE,Code Duree,
+duree,libelle,Type de duree,,FALSE,FALSE,VARCHAR(50),REFERENCE,Type de duree,
+duree,nbMois,Nombre de mois,,FALSE,FALSE,INT,REFERENCE,Nbre de mois,
 devis,id,Identifiant devis,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID,
 devis,idClient,Lien vers client,,FALSE,TRUE,INT,TRANSACTIONAL,Client,clients(id)
 devis,idUser,Lien vers utilisateur,,FALSE,TRUE,INT,TRANSACTIONAL,Utilisateur,users(id)
@@ -260,16 +264,29 @@ userProfiles,idProfile,Identifiant profile,,TRUE,TRUE,SERIAL,TRANSACTIONAL,ID Pr
 avenant_soustype,id,Identifiant de sous type,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID,
 avenant_soustype,idAvenant,Lien vers avenant,,FALSE,TRUE,INT,TRANSACTIONAL,Avenant,avenant(id)
 avenant_soustype,description,Description de sous type avenant,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Description,
+contrats,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID,
+contrats,numPolice,Numero de Police,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Numéro Police,
+contrats,typeContrat,Type de contrat,Duree ferme / Duree compagne,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Type Contrat,
+contrats,dateDebut,Date de souscription,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Souscription,
+contrats,dateFin,Date de fin du contrat (VIDE si en cours ),YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Fin,
+contrats,idClient,Lien vers Clients,,FALSE,TRUE,INT,TRANSACTIONAL,Client,clients(id)
+contrats,idProduit,Produit d'intérêt pour le prospect,,FALSE,TRUE,INT,TRANSACTIONAL,Produit,produits(id)
+contrats,idCompagnie,Lien vers Compagnies,,FALSE,TRUE,INT,TRANSACTIONAL,Compagnie,compagnies(id)
+contrats,prime,Prime annuel,,FALSE,FALSE,"DECIMAL(15,2)",TRANSACTIONAL,Prime Annuel,
+contrats,idTypeDuree,Type de duree,,FALSE,TRUE,INT,TRANSACTIONAL,Type de Duree,duree(id)
 opportunites,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID,
 opportunites,idClient,Lien vers le client (statut OPPORTUNITE),,FALSE,TRUE,INT,TRANSACTIONAL,Client,clients(id)
 opportunites,idUser,Lien vers l'utilisateur en charge,,FALSE,TRUE,INT,TRANSACTIONAL,Utilisateur,users(id)
 opportunites,idProduit,Produit d'intérêt pour le prospect,,FALSE,TRUE,INT,TRANSACTIONAL,Produit,produits(id)
-opportunites,budgetEstime,Budget communiqué par le prospect,,FALSE,FALSE,"NUMERIC(12,2)",TRANSACTIONAL,Budget Estimé,
+opportunites,budgetEstime,Budget communiqué par le prospect,,FALSE,FALSE,"NUMERIC(15,2)",TRANSACTIONAL,Budget Estimé,
 opportunites,origine,Origine de l'opportunité,Prospection/Référencement/Campagne Marketing/Appel entrant,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Origine,
 opportunites,etape,Etape actuelle dans le cycle de vente,Qualification/Analyse besoin/Proposition/Gagnée/Perdue,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Étape,
 opportunites,dateCreation,Date de création de l'opportunité,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Création,
 opportunites,dateEcheance,Date d'échéance prévue pour la décision,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Échéance,
 opportunites,description,Notes et détails sur le besoin du prospect,,FALSE,FALSE,TEXT,TRANSACTIONAL,Description,
+opportunites,idContrat,Lien vers contrats,,FALSE,TRUE,INT,TRANSACTIONAL,Contrats,contrats(id)
+opportunites,transformed,Si opportunite transforme,,FALSE,FALSE,BOOLEAN,TRANSACTIONAL,Tranformee,
+opportunites,dateTransformation,Date de transformation,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date de transformation,
 reclamations,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID,
 reclamations,idClient,Lien vers le client (statut OPPORTUNITE),,FALSE,TRUE,INT,TRANSACTIONAL,Client,clients(id)
 reclamations,idProduction,Lien vers la police concernée,,FALSE,TRUE,INT,TRANSACTIONAL,Production,production(id)
@@ -286,13 +303,6 @@ recommandations,sourceType,"Type de source (un autre client, un partenaire)",CLI
 recommandations,sourceId,ID de la source (ex: idClient du référent),,FALSE,TRUE,INT,TRANSACTIONAL,ID Source,clients(id)
 recommandations,dateRecommandation,Date à laquelle la recommandation a été faite,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Recommandation,
 recommandations,statut,Statut de la recommandation,EN_COURS/CONVERTI,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Statut,
-contrats,id,Identifiant technique,,TRUE,FALSE,SERIAL,TRANSACTIONAL,ID,
-contrats,numPolice,Numero de Police,,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Numéro Police,
-contrats,typeContrat,Type de contrat,Duree ferme / Duree compagne,FALSE,FALSE,VARCHAR(255),TRANSACTIONAL,Type Contrat,
-contrats,dateDebut,Date de souscription,YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Souscription,
-contrats,dateFin,Date de fin du contrat (VIDE si en cours ),YYYY-MM-DD,FALSE,FALSE,DATE,TRANSACTIONAL,Date Fin,
-contrats,idClient,Lien vers Clients,,FALSE,TRUE,INT,TRANSACTIONAL,Client,clients(id)
-contrats,idProduit,Produit d'intérêt pour le prospect,,FALSE,TRUE,INT,TRANSACTIONAL,Produit,produits(id)
 historique_modifications,id,Identifiant technique,,TRUE,FALSE,SERIAL,LOG,ID,
 historique_modifications,nomTable,Nom de la table modifiée,,FALSE,FALSE,VARCHAR(255),LOG,Nom Table,
 historique_modifications,idEnregistrement,ID de l'enregistrement affecté dans la table,,FALSE,FALSE,INT,LOG,ID Enregistrement,

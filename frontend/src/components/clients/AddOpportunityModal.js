@@ -12,7 +12,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid
+  Grid,
+  InputAdornment,
+  Snackbar,
+  Alert
 } from '@mui/material';
 
 import { opportunityService } from '../../services/opportunityService';
@@ -23,22 +26,36 @@ const AddOpportunityModal = ({
   onClose, 
   clientId,
   onSuccess,
-  clientType 
+  clientType,
+  isModify = false,
+  opportunityData = null
 }) => {
   const [formData, setFormData] = useState({
-    idProduit: '',
-    origine: 'Prospection',
-    etape: 'Qualification',
-    dateEcheance: '',
-    description: ''
+    idProduit: '', origine: 'Prospection', etape: 'Qualification',
+    dateEcheance: '', description: '', budgetEstime: '',
+    transformed: false, idContrat: null, dateTransformation: null
   });
 
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [produits, setProduits] = useState([]);
 
   // Load products when modal opens
   useEffect(() => {
     if (open) {
+      // Reset form to initial state when modal opens
+      setFormData({
+        idProduit: '', 
+        origine: 'Prospection', 
+        etape: 'Qualification',
+        dateEcheance: '', 
+        description: '', 
+        budgetEstime: '',
+        transformed: false, 
+        idContrat: null, 
+        dateTransformation: null
+      });
+      setErrorMessage('');
       loadProduits();
     }
   }, [open]);
@@ -56,22 +73,37 @@ const AddOpportunityModal = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setErrorMessage('');
+
     try {
-      setLoading(true);
-      
       const opportunityData = {
         idClient: clientId,
-        idUser: 1, // TODO: Get from auth context
-        ...formData,
-        dateEcheance: formData.dateEcheance || null
+        idUser: 1, // Default user ID
+        idProduit: formData.idProduit ? parseInt(formData.idProduit) : null,
+        origine: formData.origine,
+        etape: formData.etape,
+        dateEcheance: formData.dateEcheance || null,
+        description: formData.description,
+        budgetEstime: formData.budgetEstime ? parseFloat(formData.budgetEstime) : null
       };
-      
+
       await opportunityService.createOpportunity(opportunityData);
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Error creating opportunity:', error);
-      alert('Erreur lors de la création de l\'opportunité');
+      
+      // Extract meaningful error message
+      let errorMsg = 'Erreur lors de la création de l&apos;opportunité';
+      
+      if (error.response?.data?.detail) {
+        errorMsg = error.response.data.detail;
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
+      setErrorMessage(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -84,11 +116,22 @@ const AddOpportunityModal = ({
     }));
   };
 
+  const handleCloseError = () => {
+    setErrorMessage('');
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Ajouter une Opportunité</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
+          {/* Error Alert */}
+          {errorMessage && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
+          
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <FormControl fullWidth>
@@ -153,11 +196,25 @@ const AddOpportunityModal = ({
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Date d'échéance"
+                label="Date d&apos;échéance"
                 type="date"
                 value={formData.dateEcheance}
                 onChange={(e) => handleChange('dateEcheance', e.target.value)}
                 InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Budget estimé (DH)"
+                type="number"
+                value={formData.budgetEstime}
+                onChange={(e) => handleChange('budgetEstime', e.target.value)}
+                placeholder="Budget estimé en dirhams"
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">DH</InputAdornment>,
+                }}
               />
             </Grid>
             
@@ -169,7 +226,7 @@ const AddOpportunityModal = ({
                 onChange={(e) => handleChange('description', e.target.value)}
                 multiline
                 rows={3}
-                placeholder="Description de l'opportunité"
+                placeholder="Description de l&apos;opportunité"
               />
             </Grid>
           </Grid>
@@ -182,12 +239,29 @@ const AddOpportunityModal = ({
           <Button 
             type="submit" 
             variant="contained" 
+            color="primary"
             disabled={loading}
           >
             {loading ? 'Création...' : 'Créer'}
           </Button>
         </DialogActions>
       </form>
+      
+      {/* Error Snackbar */}
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseError} 
+          severity="error" 
+          sx={{ width: '100%' }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </Dialog>
   );
 };

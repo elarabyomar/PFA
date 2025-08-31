@@ -17,14 +17,37 @@ class ContractRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def get_all_contracts(self) -> List[Contract]:
+        """Get all contracts with client, produit, compagnie, and duree information"""
+        from sqlalchemy.orm import selectinload
+        from model.client import Client
+        
+        result = await self.session.execute(
+            select(Contract)
+            .options(
+                selectinload(Contract.produit),
+                selectinload(Contract.compagnie),
+                selectinload(Contract.duree),
+                selectinload(Contract.client).selectinload(Client.particulier),
+                selectinload(Contract.client).selectinload(Client.societe)
+            )
+            .order_by(Contract.id.desc())  # Newest contracts first
+        )
+        return result.scalars().all()
+
     async def get_contracts_by_client(self, client_id: int) -> List[Contract]:
         """Get all contracts for a specific client"""
         from sqlalchemy.orm import selectinload
         
         result = await self.session.execute(
             select(Contract)
-            .options(selectinload(Contract.produit))
+            .options(
+                selectinload(Contract.produit),
+                selectinload(Contract.compagnie),
+                selectinload(Contract.duree)
+            )
             .where(Contract.idClient == client_id)
+            .order_by(Contract.id.desc())  # Newest contracts first
         )
         return result.scalars().all()
 
@@ -44,20 +67,25 @@ class ContractRepository:
                 logger.info(f"📅 Set default date: {contract_data['dateDebut']}")
             
             logger.info(f"📋 Final contract data: {contract_data}")
+            logger.info(f"📋 dateDebut type: {type(contract_data.get('dateDebut'))}")
+            logger.info(f"📋 dateFin type: {type(contract_data.get('dateFin'))}")
             
             contract = Contract(**contract_data)
+            logger.info(f"📋 Contract object created: {contract}")
+            logger.info(f"📋 Contract.dateDebut: {contract.dateDebut} (type: {type(contract.dateDebut)})")
+            logger.info(f"📋 Contract.dateFin: {contract.dateFin} (type: {type(contract.dateFin)})")
+            
             self.session.add(contract)
             await self.session.commit()
             await self.session.refresh(contract)
             
-            # Load the product relationship if it exists
-            if contract.idProduit:
-                try:
-                    from sqlalchemy.orm import selectinload
-                    await self.session.refresh(contract, attribute_names=['produit'])
-                    logger.info(f"✅ Loaded product relationship for contract {contract.id}")
-                except Exception as e:
-                    logger.warning(f"⚠️ Failed to load product relationship for contract {contract.id}: {e}")
+            # Load the relationships if they exist
+            try:
+                from sqlalchemy.orm import selectinload
+                await self.session.refresh(contract, attribute_names=['produit', 'compagnie', 'duree'])
+                logger.info(f"✅ Loaded relationships for contract {contract.id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load relationships for contract {contract.id}: {e}")
             
             logger.info(f"✅ Contract created successfully with ID: {contract.id}")
             return contract
@@ -77,13 +105,12 @@ class ContractRepository:
             await self.session.commit()
             await self.session.refresh(contract)
             
-            # Load the product relationship if it exists
-            if contract.idProduit:
-                try:
-                    await self.session.refresh(contract, attribute_names=['produit'])
-                    logger.info(f"✅ Loaded product relationship for updated contract {contract.id}")
-                except Exception as e:
-                    logger.warning(f"⚠️ Failed to load product relationship for updated contract {contract.id}: {e}")
+            # Load the relationships if they exist
+            try:
+                await self.session.refresh(contract, attribute_names=['produit', 'compagnie', 'duree'])
+                logger.info(f"✅ Loaded relationships for updated contract {contract.id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load relationships for updated contract {contract.id}: {e}")
         
         return contract
 
@@ -102,7 +129,11 @@ class ContractRepository:
         
         result = await self.session.execute(
             select(Contract)
-            .options(selectinload(Contract.produit))
+            .options(
+                selectinload(Contract.produit),
+                selectinload(Contract.compagnie),
+                selectinload(Contract.duree)
+            )
             .where(Contract.id == contract_id)
         )
         return result.scalars().first()

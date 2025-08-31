@@ -18,8 +18,7 @@ class ClientBase(BaseModel):
     tel: Optional[str] = None
     email: Optional[str] = None
     importance: Optional[str] = None
-    budget: Optional[str] = None
-    proba: Optional[str] = None
+    budget: Optional[Decimal] = None
 
 class ClientCreate(ClientBase):
     pass
@@ -32,7 +31,7 @@ class ClientUpdate(BaseModel):
     tel: Optional[str] = None
     email: Optional[str] = None
     importance: Optional[str] = None
-    budget: Optional[str] = None
+    budget: Optional[Decimal] = None
     proba: Optional[str] = None
     
     # Particulier fields

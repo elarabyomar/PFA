@@ -59,6 +59,7 @@ import StarRating from '../common/StarRating';
 import AddOpportunityModal from './AddOpportunityModal';
 import AddAssociateModal from './AddAssociateModal';
 import AddAdherentModal from './AddAdherentModal';
+import EditOpportunityModal from './EditOpportunityModal';
 
 const ClientDetailsModal = ({ 
   open, 
@@ -140,6 +141,13 @@ const ClientDetailsModal = ({
   const [associateModalOpen, setAssociateModalOpen] = useState(false);
   const [adherentModalOpen, setAdherentModalOpen] = useState(false);
   const [adherentType, setAdherentType] = useState('');
+  
+  // Opportunity CRUD states
+  const [editOpportunityModalOpen, setEditOpportunityModalOpen] = useState(false);
+  const [selectedOpportunityForEdit, setSelectedOpportunityForEdit] = useState(null);
+  const [opportunityToEdit, setOpportunityToEdit] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [opportunityToDelete, setOpportunityToDelete] = useState(null);
 
   // Adherents data - now includes CSV parsing
   const [flotteAutoData, setFlotteAutoData] = useState([]);
@@ -162,10 +170,23 @@ const ClientDetailsModal = ({
   const [adherentsFileConfirmed, setAdherentsFileConfirmed] = useState(false);
   const adherentsFileInputRef = React.useRef();
 
+  // Contract editing states
+  const [editContractModalOpen, setEditContractModalOpen] = useState(false);
+  const [selectedContractForEdit, setSelectedContractForEdit] = useState(null);
+  const [viewDocumentsModalOpen, setViewDocumentsModalOpen] = useState(false);
+  const [selectedContractForDocuments, setSelectedContractForDocuments] = useState(null);
+  const [contractDocuments, setContractDocuments] = useState([]);
+  const [newContractDocuments, setNewContractDocuments] = useState([]);
+  const [deletedContractDocuments, setDeletedContractDocuments] = useState([]);
+
   // Load client data when modal opens
   useEffect(() => {
     if (open && clientId) {
       loadClientData();
+      // Force refresh opportunities to ensure we have the latest data
+      setTimeout(() => {
+        forceRefreshOpportunities();
+      }, 1000); // Small delay to ensure loadClientData completes first
     }
   }, [open, clientId]);
 
@@ -218,6 +239,17 @@ const ClientDetailsModal = ({
       }
     }
   }, [open, clientId, documents, formData.typeClient]);
+
+  // Clear contract edit states when modal is closed
+  useEffect(() => {
+    if (!editContractModalOpen) {
+      // Clear all contract-related states when modal is closed
+      setNewContractDocuments([]);
+      setDeletedContractDocuments([]);
+      setContractDocuments([]);
+      setSelectedContractForEdit(null);
+    }
+  }, [editContractModalOpen]);
 
   const loadOtherSocieteClients = async () => {
     try {
@@ -609,7 +641,7 @@ const ClientDetailsModal = ({
         tel: formData.tel,
         email: formData.email,
         importance: formData.importance,
-        budget: formData.budget,
+        budget: formData.budget ? parseFloat(formData.budget) : null,
         proba: formData.proba
       };
       
@@ -731,7 +763,13 @@ const ClientDetailsModal = ({
       // Upload new documents
       for (const file of newDocuments) {
         try {
-          await documentService.uploadDocument(file, clientId);
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('client_id', clientId);
+          formData.append('entity_type', 'CLIENT');
+          formData.append('entity_id', clientId);
+          
+          await documentService.uploadDocument(formData);
           console.log(`✅ Document ${file.name} uploaded successfully`);
         } catch (error) {
           console.error(`❌ Failed to upload document ${file.name}:`, error);
@@ -857,8 +895,15 @@ const ClientDetailsModal = ({
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [transformFormData, setTransformFormData] = useState({
     typeContrat: 'Duree ferme',
-    dateFin: ''
+    dateDebut: '',
+    dateFin: '',
+    prime: '',
+    idCompagnie: '',
+    idTypeDuree: ''
   });
+  const [companies, setCompanies] = useState([]);
+  const [durationTypes, setDurationTypes] = useState([]);
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
 
   const handleTransformOpportunity = async (opportunityId) => {
     const opportunity = opportunities.find(opp => opp.id === opportunityId);
@@ -868,36 +913,78 @@ const ClientDetailsModal = ({
     }
     
     setSelectedOpportunity(opportunity);
+    // Set default dateDebut to today
+    const today = new Date().toISOString().split('T')[0];
+    
     setTransformFormData({
       typeContrat: 'Duree ferme',
-      dateFin: ''
+      dateDebut: today,
+      dateFin: '',
+      prime: '',
+      idCompagnie: '',
+      idTypeDuree: ''
     });
     setTransformModalOpen(true);
+    
+    // Load companies and duration types when opening the modal
+    await loadCompanies();
+    await loadDurationTypes();
   };
+
+  const loadCompanies = async () => {
+    try {
+      const response = await fetch('/api/references/compagnies');
+      if (response.ok) {
+        const data = await response.json();
+        setCompanies(data);
+      }
+    } catch (error) {
+      console.error('❌ Error loading companies:', error);
+    }
+  };
+
+  const loadDurationTypes = async () => {
+    try {
+      const response = await fetch('/api/references/duree');
+      if (response.ok) {
+        const data = await response.json();
+        setDurationTypes(data);
+      }
+    } catch (error) {
+      console.error('❌ Error loading duration types:', error);
+    }
+  };
+
+
 
   const handleTransformSubmit = async () => {
     try {
       console.log('🔄 Starting opportunity transformation for ID:', selectedOpportunity.id);
       
-      if (!transformFormData.dateFin) {
-        setErrorMessage('La date de fin est obligatoire');
+      if (!transformFormData.dateDebut || !transformFormData.dateFin) {
+        setErrorMessage('Les dates de début et de fin sont obligatoires');
         setShowError(true);
         return;
       }
 
       const contractData = {
         typeContrat: transformFormData.typeContrat,
-        dateFin: transformFormData.dateFin
+        dateDebut: transformFormData.dateDebut,
+        dateFin: transformFormData.dateFin,
+        prime: transformFormData.prime ? parseFloat(transformFormData.prime) : null,
+        idCompagnie: transformFormData.idCompagnie ? parseInt(transformFormData.idCompagnie) : null,
+        idTypeDuree: transformFormData.idTypeDuree ? parseInt(transformFormData.idTypeDuree) : null
       };
       
       console.log('📋 Contract data to send:', contractData);
 
-      const result = await contractService.transformOpportunityToContract(selectedOpportunity.id, contractData);
+      const result = await contractService.transformOpportunityToContract(selectedOpportunity.id, contractData, selectedDocuments);
       console.log('✅ Transformation successful, result:', result);
       
       setSuccessMessage('Opportunité transformée en contrat avec succès');
       setShowSuccess(true);
       setTransformModalOpen(false);
+      setSelectedDocuments([]);
       await loadClientData(); // Reload data
     } catch (error) {
       console.error('❌ Error transforming opportunity:', error);
@@ -922,7 +1009,109 @@ const ClientDetailsModal = ({
     setShowSuccess(true);
   };
 
+  const handleEditOpportunity = (opportunity) => {
+    setSelectedOpportunityForEdit(opportunity);
+    setEditOpportunityModalOpen(true);
+  };
 
+  const handleEditOpportunitySuccess = async () => {
+    await loadClientData(); // Reload data
+    setSuccessMessage('Opportunité modifiée avec succès');
+    setShowSuccess(true);
+    setEditOpportunityModalOpen(false);
+    setSelectedOpportunityForEdit(null);
+  };
+
+  const handleDeleteOpportunity = (opportunityId) => {
+    console.log('🗑️ handleDeleteOpportunity called with ID:', opportunityId);
+    setOpportunityToDelete(opportunityId);
+    setDeleteDialogOpen(true);
+    console.log('✅ Delete dialog opened, opportunityToDelete set to:', opportunityId);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    console.log('❌ handleCloseDeleteDialog called');
+    setDeleteDialogOpen(false);
+    setOpportunityToDelete(null);
+    console.log('✅ Delete dialog closed, opportunityToDelete cleared');
+  };
+
+  // Function to reload only opportunities data (more efficient than loadClientData)
+  const reloadOpportunities = async () => {
+    try {
+      console.log('🔄 Reloading only opportunities data...');
+      const opportunitiesResponse = await opportunityService.getOpportunitiesByClient(clientId);
+      setOpportunities(opportunitiesResponse || []);
+      console.log('✅ Opportunities reloaded:', opportunitiesResponse);
+    } catch (error) {
+      console.error('❌ Error reloading opportunities:', error);
+      // Don't show error to user for this, just log it
+    }
+  };
+
+  // Function to force refresh opportunities data (used when data might be stale)
+  const forceRefreshOpportunities = async () => {
+    try {
+      console.log('🔄 Force refreshing opportunities data...');
+      // Clear current state first
+      setOpportunities([]);
+      // Then reload fresh data
+      await reloadOpportunities();
+      console.log('✅ Opportunities force refreshed');
+    } catch (error) {
+      console.error('❌ Error force refreshing opportunities:', error);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    console.log('🔄 handleConfirmDelete called');
+    console.log('📋 opportunityToDelete:', opportunityToDelete);
+    
+    if (!opportunityToDelete) {
+      console.error('❌ No opportunity to delete!');
+      return;
+    }
+    
+    try {
+      console.log('📡 Calling opportunityService.deleteOpportunity with ID:', opportunityToDelete);
+      const result = await opportunityService.deleteOpportunity(opportunityToDelete);
+      console.log('✅ Delete API call successful, result:', result);
+      
+      // Force clear the opportunities state first to ensure fresh data
+      console.log('🗑️ Clearing opportunities state...');
+      setOpportunities([]);
+      
+      // Only reload opportunities data, not all client data
+      console.log('🔄 Reloading opportunities data...');
+      await reloadOpportunities();
+      console.log('✅ Opportunities data reloaded');
+      
+      setDeleteDialogOpen(false);
+      setOpportunityToDelete(null);
+      setSuccessMessage('Opportunité supprimée avec succès');
+      setShowSuccess(true);
+      console.log('✅ Delete flow completed successfully');
+    } catch (error) {
+      console.error('❌ Error deleting opportunity:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      // Handle specific error cases
+      if (error.response?.status === 404) {
+        setErrorMessage('Cette opportunité n\'existe plus. Actualisation de la liste...');
+        setShowError(true);
+        
+        // Force refresh opportunities data since the current state is stale
+        console.log('🔄 Opportunity not found, forcing refresh of opportunities...');
+        await reloadOpportunities();
+      } else {
+        setErrorMessage('Erreur lors de la suppression de l\'opportunité');
+        setShowError(true);
+      }
+    }
+  };
 
   const handleAddRelation = async () => {
     setAssociateModalOpen(true);
@@ -1048,42 +1237,263 @@ const ClientDetailsModal = ({
     setNewDocuments(prev => [...prev, ...pdfFiles]);
   };
 
-  const handleDocumentClick = (document) => {
-    console.log('📄 Document clicked:', document);
-    console.log('📄 Document type:', typeof document);
-    console.log('📄 Document keys:', Object.keys(document));
-    console.log('📄 Document.fichierChemin:', document.fichierChemin);
-    console.log('📄 Document.fichierChemin type:', typeof document.fichierChemin);
-    console.log('📄 Document.fichierNom:', document.fichierNom);
-    console.log('📄 Document.fichierNom type:', typeof document.fichierNom);
+  const handleTransformDocumentUpload = (event) => {
+    const files = Array.from(event.target.files);
+    const pdfFiles = files.filter(file => file.type === 'application/pdf');
     
-    // Check if this is a document with an actual file or just a reference
-    if (document.fichierChemin && document.fichierChemin.trim() !== '') {
-      // Check if this looks like a file path (has file extension)
-      const hasFileExtension = /\.(pdf|doc|docx|xls|xlsx|txt|csv|jpg|jpeg|png|gif)$/i.test(document.fichierChemin);
+    if (pdfFiles.length !== files.length) {
+      alert('Seuls les fichiers PDF sont acceptés');
+      return;
+    }
+    
+    setSelectedDocuments(prev => [...prev, ...pdfFiles]);
+  };
+
+  const removeTransformDocument = (index) => {
+    setSelectedDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Contract handlers
+  const handleEditContract = async (contract) => {
+    console.log('🔍 Opening edit modal for contract:', contract);
+    
+    // Clear all previous contract-related states first
+    setNewContractDocuments([]);
+    setDeletedContractDocuments([]);
+    
+    setSelectedContractForEdit(contract);
+    setEditContractModalOpen(true);
+    
+    // Load companies and duration types when opening the edit contract modal
+    await loadCompanies();
+    await loadDurationTypes();
+    
+    // Load existing documents for this contract
+    try {
+      console.log(`📄 Loading documents for contract ${contract.id}...`);
+      const docs = await documentService.getDocumentsByEntity('contrat', contract.id);
+      console.log(`✅ Loaded ${docs.length} documents for contract:`, docs);
+      setContractDocuments(docs);
+    } catch (error) {
+      console.error('Error loading contract documents:', error);
+      setContractDocuments([]);
+    }
+  };
+
+  const handleViewContractDocuments = async (contract) => {
+    setSelectedContractForDocuments(contract);
+    try {
+      // Load documents for this contract
+      const docs = await documentService.getDocumentsByEntity('contrat', contract.id);
+      setContractDocuments(docs);
+      setViewDocumentsModalOpen(true);
+    } catch (error) {
+      console.error('Error loading contract documents:', error);
+      setErrorMessage('Erreur lors du chargement des documents');
+      setShowError(true);
+    }
+  };
+
+  const handleContractEditSuccess = async () => {
+    try {
+      if (!selectedContractForEdit) return;
       
-      if (!hasFileExtension) {
-        // This is likely a reference document (like CSV import) without an actual file
-        console.log('📄 Document appears to be a reference without an actual file:', document.fichierChemin);
-        alert(`Ce document est une référence (${document.fichierNom || 'N/A'}) et ne contient pas de fichier téléchargeable.\n\nType: Référence\nChemin: ${document.fichierChemin || 'N/A'}`);
-        return;
+      // Prepare contract data for update
+      const updateData = {
+        numPolice: selectedContractForEdit.numPolice,
+        typeContrat: selectedContractForEdit.typeContrat,
+        dateDebut: selectedContractForEdit.dateDebut,
+        dateFin: selectedContractForEdit.dateFin,
+        prime: selectedContractForEdit.prime ? parseFloat(selectedContractForEdit.prime) : null,
+        idCompagnie: selectedContractForEdit.idCompagnie ? parseInt(selectedContractForEdit.idCompagnie) : null,
+        idTypeDuree: selectedContractForEdit.idTypeDuree ? parseInt(selectedContractForEdit.idTypeDuree) : null
+      };
+      
+      // Update contract via API
+      await contractService.updateContract(selectedContractForEdit.id, updateData);
+      
+      // Handle document deletions
+      for (const docId of deletedContractDocuments) {
+        try {
+          await documentService.deleteDocument(docId);
+        } catch (error) {
+          console.error(`Error deleting document ${docId}:`, error);
+        }
       }
       
-      // Use the correct API endpoint to serve the document
-      const fileUrl = `/api/documents/files/${encodeURIComponent(document.fichierChemin)}`;
-      console.log('📄 Opening document:', fileUrl);
-      console.log('📄 Full URL:', window.location.origin + fileUrl);
+      // Handle new document uploads
+      for (const file of newContractDocuments) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('client_id', selectedContractForEdit.idClient);
+          formData.append('entity_type', 'contrat');
+          formData.append('entity_id', selectedContractForEdit.id);
+          
+          // Upload document directly linked to contract
+          const uploadedDoc = await documentService.uploadDocument(formData);
+          
+          console.log(`✅ Document ${file.name} uploaded and linked successfully to contract ${selectedContractForEdit.id}`);
+        } catch (error) {
+          console.error(`Error uploading document ${file.name}:`, error);
+          setErrorMessage(`Erreur lors de l'upload du document ${file.name}: ${error.message}`);
+          setShowError(true);
+        }
+      }
       
-      // Try to open the document
+      // Reload data
+      await loadClientData();
+      
+      // Reset document states
+      setContractDocuments([]);
+      setNewContractDocuments([]);
+      setDeletedContractDocuments([]);
+      
+      setSuccessMessage('Contrat modifié avec succès');
+      setShowSuccess(true);
+      setEditContractModalOpen(false);
+      setSelectedContractForEdit(null);
+    } catch (error) {
+      console.error('Error updating contract:', error);
+      setErrorMessage(`Erreur lors de la modification: ${error.message}`);
+      setShowError(true);
+    }
+  };
+
+  const handleContractDocumentUpload = (event) => {
+    const files = Array.from(event.target.files);
+    const pdfFiles = files.filter(file => file.type === 'application/pdf');
+    
+    if (pdfFiles.length !== files.length) {
+      alert('Seuls les fichiers PDF sont acceptés');
+      return;
+    }
+    
+    // Add new files to newContractDocuments (not to contractDocuments)
+    setNewContractDocuments(prev => [...prev, ...pdfFiles]);
+    setSuccessMessage('Documents ajoutés (seront sauvegardés lors de la confirmation)');
+    setShowSuccess(true);
+  };
+
+  const removeContractDocument = (index, isNew = false) => {
+    if (isNew) {
+      // Remove from new documents
+      setNewContractDocuments(prev => prev.filter((_, i) => i !== index));
+    } else {
+      // Mark existing document for deletion
+      const doc = contractDocuments[index];
+      if (doc && doc.id) {
+        setDeletedContractDocuments(prev => [...prev, doc.id]);
+      }
+      // Remove from display
+      setContractDocuments(prev => prev.filter((_, i) => i !== index));
+    }
+    setSuccessMessage('Document supprimé');
+    setShowSuccess(true);
+  };
+
+  const handleTransformDocumentClick = (document) => {
+    console.log('📄 Transform document clicked:', document);
+    
+    // For transformation documents, we can show a preview or download
+    if (document && document.name) {
+      // Create a temporary URL for the file
+      const fileUrl = URL.createObjectURL(document);
+      
+      // Open the file in a new window/tab
       const newWindow = window.open(fileUrl, '_blank');
       if (!newWindow) {
         console.error('❌ Failed to open document window');
         alert('Impossible d\'ouvrir le document dans une nouvelle fenêtre. Vérifiez les bloqueurs de popup.');
       }
+      
+      // Clean up the URL after a delay
+      setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
     } else {
-      console.error('❌ Document has no fichierChemin or empty path:', document);
-      console.error('❌ Document data:', JSON.stringify(document, null, 2));
-              alert(`Document non disponible - chemin manquant\nNom: ${document.fichierNom || 'N/A'}\nChemin: ${document.fichierChemin || 'N/A'}\nID: ${document.id || 'N/A'}\n\nCe document n&apos;a pas de fichier associé.`);
+      alert('Document non disponible');
+    }
+  };
+
+  const handleDocumentClick = (document) => {
+    try {
+      console.log('📄 Document clicked:', document);
+      console.log('📄 Document type:', typeof document);
+      console.log('📄 Document keys:', Object.keys(document));
+      
+      // Check if this is a File object (new document) or a document record (existing document)
+      if (document instanceof File) {
+        // NEW DOCUMENT: This is a File object from file input
+        console.log('📄 New document File object detected:', document.name);
+        
+        // Create a temporary URL for the file
+        const fileUrl = URL.createObjectURL(document);
+        console.log('📄 Created blob URL for new document:', fileUrl);
+        
+        // Open the file in a new window/tab
+        const newWindow = window.open(fileUrl, '_blank');
+        if (!newWindow) {
+          console.error('❌ Failed to open document window');
+          alert('Impossible d\'ouvrir le document dans une nouvelle fenêtre. Vérifiez les bloqueurs de popup.');
+        } else {
+          console.log('✅ New document window opened successfully');
+        }
+        
+        // Clean up the URL after a delay
+        setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
+        return;
+      }
+      
+      // EXISTING DOCUMENT: This is a document record from the database
+      console.log('📄 Existing document record detected');
+      console.log('📄 Document.fichierChemin:', document.fichierChemin);
+      console.log('📄 Document.fichierNom:', document.fichierNom);
+      
+      // Check if this is a document with an actual file or just a reference
+      if (document.fichierChemin && document.fichierChemin.trim() !== '') {
+        // Check if this looks like a file path (has file extension)
+        const hasFileExtension = /\.(pdf|doc|docx|xls|xlsx|txt|csv|jpg|jpeg|png|gif)$/i.test(document.fichierChemin);
+        
+        if (!hasFileExtension) {
+          // This is likely a reference document (like CSV import) without an actual file
+          console.log('📄 Document appears to be a reference without an actual file:', document.fichierChemin);
+          alert(`Ce document est une référence (${document.fichierNom || 'N/A'}) et ne contient pas de fichier téléchargeable.\n\nType: Référence\nChemin: ${document.fichierChemin || 'N/A'}`);
+          return;
+        }
+        
+        // Check if this is an old format document and handle it properly
+        let fileUrl;
+        if (document.fichierChemin.startsWith('uploads/')) {
+          // OLD FORMAT: extract the filename and try to find a matching UUID file
+          const filename = document.fichierChemin.replace('uploads/', '');
+          console.log('📄 Document has old format, extracted filename:', filename);
+          
+          // For now, show an error asking user to re-upload
+          alert(`Ce document utilise un ancien format de stockage qui n'est plus supporté.\n\nNom: ${document.fichierNom}\nChemin: ${document.fichierChemin}\n\nVeuillez supprimer ce document et le télécharger à nouveau pour le corriger.`);
+          return;
+        } else {
+          // NEW FORMAT: use UUID filename directly
+          fileUrl = `${window.location.origin}/api/documents/files/${encodeURIComponent(document.fichierChemin)}`;
+          console.log('📄 Opening document with UUID filename:', fileUrl);
+          console.log('📄 Document path:', document.fichierChemin);
+        }
+        
+        // Try to open the document in a new tab
+        console.log('📄 Attempting to open document URL:', fileUrl);
+        const newWindow = window.open(fileUrl, '_blank');
+        if (!newWindow) {
+          console.error('❌ Failed to open document window');
+          alert('Impossible d\'ouvrir le document dans une nouvelle fenêtre. Vérifiez les bloqueurs de popup.');
+        } else {
+          console.log('✅ Document window opened successfully');
+        }
+      } else {
+        console.error('❌ Document has no fichierChemin or empty path:', document);
+        console.error('❌ Document data:', JSON.stringify(document, null, 2));
+        alert(`Document non disponible - chemin manquant\nNom: ${document.fichierNom || 'N/A'}\nChemin: ${document.fichierChemin || 'N/A'}\nID: ${document.id || 'N/A'}\n\nCe document n&apos;a pas de fichier associé.`);
+      }
+    } catch (error) {
+      console.error('❌ Error opening document:', error);
+      alert(`Erreur lors de l'ouverture du document:\n${error.message}\n\nVérifiez que le fichier existe sur le serveur.`);
     }
   };
 
@@ -1635,16 +2045,15 @@ const ClientDetailsModal = ({
               <TableCell>Étape</TableCell>
               <TableCell>Date de Création</TableCell>
               <TableCell>Date d&apos;Échéance</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>Budget</TableCell>
+                      <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {opportunities
               .sort((a, b) => {
-                // Sort by dateCreation (newest first)
-                const dateA = a.dateCreation ? new Date(a.dateCreation) : new Date(0);
-                const dateB = b.dateCreation ? new Date(b.dateCreation) : new Date(0);
-                return dateB - dateA; // Descending order (newest first)
+                // Sort by ID (newest first) to ensure new opportunities appear at the top
+                return b.id - a.id;
               })
               .map((opp) => (
                 <TableRow key={opp.id}>
@@ -1656,20 +2065,59 @@ const ClientDetailsModal = ({
                   <TableCell>{opp.dateCreation || 'N/A'}</TableCell>
                   <TableCell>{opp.dateEcheance || 'N/A'}</TableCell>
                   <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleTransformOpportunity(opp.id)}
-                      color="primary"
-                      title="Transformer en contrat"
-                    >
-                      <TransformIcon />
-                    </IconButton>
+                    {opp.budgetEstime ? `${opp.budgetEstime} DH` : 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    {opp.transformed ? (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                          Transformée en contrat
+                        </Typography>
+                        {opp.dateTransformation && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                            {new Date(opp.dateTransformation).toLocaleDateString()}
+                          </Typography>
+                        )}
+                        {opp.contract && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.75rem' }}>
+                            Contrat #{opp.contract.numPolice}
+                          </Typography>
+                        )}
+                      </Box>
+                    ) : (
+                      <>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleTransformOpportunity(opp.id)}
+                          color="primary"
+                          title="Transformer en contrat"
+                        >
+                          <TransformIcon />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditOpportunity(opp)}
+                          color="secondary"
+                          title="Modifier l&apos;opportunité"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteOpportunity(opp.id)}
+                          color="error"
+                          title="Supprimer l&apos;opportunité"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
             {opportunities.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} align="center">
+                <TableCell colSpan={7} align="center">
                   Aucune opportunité trouvée
                 </TableCell>
               </TableRow>
@@ -1692,31 +2140,49 @@ const ClientDetailsModal = ({
             <TableRow>
               <TableCell>Numéro Police</TableCell>
               <TableCell>Type Contrat</TableCell>
+              <TableCell>Type Durée</TableCell>
               <TableCell>Date Début</TableCell>
               <TableCell>Date Fin</TableCell>
+              <TableCell>Prime Annuel</TableCell>
+              <TableCell>Compagnie</TableCell>
               <TableCell>Produit</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {contracts
-              .sort((a, b) => {
-                // Sort by dateDebut (newest first)
-                const dateA = a.dateDebut ? new Date(a.dateDebut) : new Date(0);
-                const dateB = b.dateDebut ? new Date(b.dateDebut) : new Date(0);
-                return dateB - dateA; // Descending order (newest first)
-              })
-              .map((contract) => (
+            {contracts.map((contract) => (
                 <TableRow key={contract.id}>
                   <TableCell>{contract.numPolice}</TableCell>
                   <TableCell>{contract.typeContrat}</TableCell>
+                  <TableCell>{contract.duree ? contract.duree.libelle : 'N/A'}</TableCell>
                   <TableCell>{contract.dateDebut}</TableCell>
                   <TableCell>{contract.dateFin || 'N/A'}</TableCell>
+                  <TableCell>{contract.prime ? `${contract.prime} DH` : 'N/A'}</TableCell>
+                  <TableCell>{contract.compagnie ? contract.compagnie.nom : 'N/A'}</TableCell>
                   <TableCell>{contract.produit ? contract.produit.libelle : contract.idProduit || 'N/A'}</TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEditContract(contract)}
+                      color="primary"
+                      title="Modifier"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleViewContractDocuments(contract)}
+                      color="info"
+                      title="Voir les documents"
+                    >
+                      <VisibilityIcon />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
               ))}
             {contracts.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} align="center">
+                <TableCell colSpan={9} align="center">
                   Aucun contrat trouvé
                 </TableCell>
               </TableRow>
@@ -2182,8 +2648,19 @@ const ClientDetailsModal = ({
           adherentType={adherentType}
         />
 
+        {/* Edit Opportunity Modal */}
+        <EditOpportunityModal
+          open={editOpportunityModalOpen}
+          onClose={() => {
+            setEditOpportunityModalOpen(false);
+            setSelectedOpportunityForEdit(null);
+          }}
+          opportunityData={selectedOpportunityForEdit}
+          onSuccess={handleEditOpportunitySuccess}
+        />
+
         {/* Transform Opportunity Modal */}
-        <Dialog open={transformModalOpen} onClose={() => setTransformModalOpen(false)} maxWidth="sm" fullWidth>
+        <Dialog open={transformModalOpen} onClose={() => setTransformModalOpen(false)} maxWidth="md" fullWidth>
           <DialogTitle>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="h6">
@@ -2201,28 +2678,137 @@ const ClientDetailsModal = ({
                 Produit: <strong>{selectedOpportunity?.produit?.libelle || 'N/A'}</strong>
               </Typography>
               
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Type de contrat</InputLabel>
-                <Select
-                  value={transformFormData.typeContrat}
-                  onChange={(e) => setTransformFormData(prev => ({ ...prev, typeContrat: e.target.value }))}
-                  label="Type de contrat"
-                >
-                  <MenuItem value="Duree ferme">Durée ferme</MenuItem>
-                  <MenuItem value="Duree campagne">Durée campagne</MenuItem>
-                </Select>
-              </FormControl>
-              
-              <TextField
-                fullWidth
-                label="Date de fin"
-                type="date"
-                value={transformFormData.dateFin}
-                onChange={(e) => setTransformFormData(prev => ({ ...prev, dateFin: e.target.value }))}
-                InputLabelProps={{ shrink: true }}
-                required
-                sx={{ mb: 2 }}
-              />
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Type de contrat</InputLabel>
+                    <Select
+                      value={transformFormData.typeContrat}
+                      onChange={(e) => setTransformFormData(prev => ({ ...prev, typeContrat: e.target.value }))}
+                      label="Type de contrat"
+                    >
+                      <MenuItem value="Duree ferme">Durée ferme</MenuItem>
+                      <MenuItem value="Duree campagne">Durée campagne</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Prime annuel (DH)"
+                    type="number"
+                    value={transformFormData.prime}
+                    onChange={(e) => setTransformFormData(prev => ({ ...prev, prime: e.target.value }))}
+                    InputProps={{
+                      endAdornment: <InputAdornment position="end">DH</InputAdornment>,
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Date de début"
+                    type="date"
+                    value={transformFormData.dateDebut}
+                    onChange={(e) => setTransformFormData(prev => ({ ...prev, dateDebut: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    required
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Date de fin"
+                    type="date"
+                    value={transformFormData.dateFin}
+                    onChange={(e) => setTransformFormData(prev => ({ ...prev, dateFin: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    required
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Compagnie</InputLabel>
+                    <Select
+                      value={transformFormData.idCompagnie}
+                      onChange={(e) => setTransformFormData(prev => ({ ...prev, idCompagnie: e.target.value }))}
+                      label="Compagnie"
+                    >
+                      <MenuItem value="">
+                        <em>Sélectionner une compagnie</em>
+                      </MenuItem>
+                      {companies.map((company) => (
+                        <MenuItem key={company.id} value={company.id}>
+                          {company.nom} ({company.codeCIE})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Type de durée</InputLabel>
+                    <Select
+                      value={transformFormData.idTypeDuree}
+                      onChange={(e) => setTransformFormData(prev => ({ ...prev, idTypeDuree: e.target.value }))}
+                      label="Type de durée"
+                    >
+                      <MenuItem value="">
+                        <em>Sélectionner un type de durée</em>
+                      </MenuItem>
+                      {durationTypes.map((duration) => (
+                        <MenuItem key={duration.id} value={duration.id}>
+                          {duration.libelle} ({duration.nbMois} mois)
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<FileUploadIcon />}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  >
+                    Importer document
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleTransformDocumentUpload}
+                    />
+                  </Button>
+                  {selectedDocuments.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Aucun document sélectionné
+                    </Typography>
+                  ) : (
+                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }}>
+                      {selectedDocuments.map((doc, index) => (
+                        <Chip
+                          key={index}
+                          label={doc.name}
+                          onClick={() => handleTransformDocumentClick(doc)}
+                          onDelete={() => removeTransformDocument(index)}
+                          icon={<DescriptionIcon />}
+                          sx={{ mb: 1, cursor: 'pointer' }}
+                        />
+                      ))}
+                    </Stack>
+                  )}
+                </Grid>
+              </Grid>
             </Box>
           </DialogContent>
           
@@ -2232,6 +2818,285 @@ const ClientDetailsModal = ({
             </Button>
             <Button onClick={handleTransformSubmit} variant="contained" color="primary">
               Transformer
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onClose={handleCloseDeleteDialog}>
+          <DialogTitle>Confirmer la suppression</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1">
+              Êtes-vous sûr de vouloir supprimer cette opportunité ?
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDeleteDialog} color="primary">
+              Annuler
+            </Button>
+            <Button onClick={handleConfirmDelete} color="error">
+              Confirmer
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Contract Modal */}
+        <Dialog 
+          open={editContractModalOpen} 
+          onClose={() => {
+            setEditContractModalOpen(false);
+            setSelectedContractForEdit(null);
+            setContractDocuments([]);
+            setNewContractDocuments([]);
+            setDeletedContractDocuments([]);
+          }}
+          onBackdropClick={() => {
+            setEditContractModalOpen(false);
+            setSelectedContractForEdit(null);
+            setContractDocuments([]);
+            setNewContractDocuments([]);
+            setDeletedContractDocuments([]);
+          }}
+          maxWidth="md" 
+          fullWidth
+        >
+          <DialogTitle>Modifier le contrat</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Numéro Police"
+                    value={selectedContractForEdit?.numPolice || ''}
+                    onChange={(e) => setSelectedContractForEdit(prev => ({ ...prev, numPolice: e.target.value }))}
+                    size="small"
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                    <InputLabel>Type Contrat</InputLabel>
+                    <Select
+                      value={selectedContractForEdit?.typeContrat || ''}
+                      onChange={(e) => setSelectedContractForEdit(prev => ({ ...prev, typeContrat: e.target.value }))}
+                      label="Type Contrat"
+                    >
+                      <MenuItem value="Duree ferme">Durée ferme</MenuItem>
+                      <MenuItem value="Duree campagne">Durée campagne</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Date de début"
+                    type="date"
+                    value={selectedContractForEdit?.dateDebut || ''}
+                    onChange={(e) => setSelectedContractForEdit(prev => ({ ...prev, dateDebut: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    size="small"
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Date de fin"
+                    type="date"
+                    value={selectedContractForEdit?.dateFin || ''}
+                    onChange={(e) => setSelectedContractForEdit(prev => ({ ...prev, dateFin: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    size="small"
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Prime annuel (DH)"
+                    type="number"
+                    value={selectedContractForEdit?.prime || ''}
+                    onChange={(e) => setSelectedContractForEdit(prev => ({ ...prev, prime: e.target.value }))}
+                    size="small"
+                    InputProps={{
+                      endAdornment: <InputAdornment position="end">DH</InputAdornment>,
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                    <InputLabel>Compagnie</InputLabel>
+                    <Select
+                      value={selectedContractForEdit?.idCompagnie || ''}
+                      onChange={(e) => setSelectedContractForEdit(prev => ({ ...prev, idCompagnie: e.target.value }))}
+                      label="Compagnie"
+                    >
+                      <MenuItem value="">
+                        <em>Sélectionner une compagnie</em>
+                      </MenuItem>
+                      {companies.map((company) => (
+                        <MenuItem key={company.id} value={company.id}>
+                          {company.nom} ({company.codeCIE})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                    <InputLabel>Type de durée</InputLabel>
+                    <Select
+                      value={selectedContractForEdit?.idTypeDuree || ''}
+                      onChange={(e) => setSelectedContractForEdit(prev => ({ ...prev, idTypeDuree: e.target.value }))}
+                      label="Type de durée"
+                    >
+                      <MenuItem value="">
+                        <em>Sélectionner un type de durée</em>
+                      </MenuItem>
+                      {durationTypes.map((duration) => (
+                        <MenuItem key={duration.id} value={duration.id}>
+                          {duration.libelle} ({duration.nbMois} mois)
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>Documents du contrat</Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<FileUploadIcon />}
+                    sx={{ mb: 2 }}
+                  >
+                    Ajouter document
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleContractDocumentUpload}
+                    />
+                  </Button>
+                  
+                  {/* Existing Documents */}
+                  {contractDocuments.length > 0 && (
+                    <>
+                      <Typography variant="subtitle2" sx={{ mb: 1, mt: 2 }}>Documents existants:</Typography>
+                      <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }}>
+                        {contractDocuments.map((doc, index) => (
+                          <Chip
+                            key={`existing-${doc.id || index}`}
+                            label={doc.fichierNom || doc.fichierChemin || `Document ${index + 1}`}
+                            onClick={() => handleDocumentClick(doc)}
+                            onDelete={() => removeContractDocument(index, false)}
+                            icon={<DescriptionIcon />}
+                            sx={{ mb: 1, cursor: 'pointer' }}
+                          />
+                        ))}
+                      </Stack>
+                    </>
+                  )}
+                  
+                  {/* New Documents */}
+                  {newContractDocuments.length > 0 && (
+                    <>
+                      <Typography variant="subtitle2" sx={{ mb: 1, mt: 2 }}>Nouveaux documents:</Typography>
+                      <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }}>
+                        {newContractDocuments.map((doc, index) => (
+                          <Chip
+                            key={`new-${index}`}
+                            label={doc.name}
+                            onClick={() => handleDocumentClick(doc)}
+                            onDelete={() => removeContractDocument(index, true)}
+                            icon={<DescriptionIcon />}
+                            sx={{ mb: 1, cursor: 'pointer' }}
+                          />
+                        ))}
+                      </Stack>
+                    </>
+                  )}
+                  
+                  {/* No Documents Message */}
+                  {contractDocuments.length === 0 && newContractDocuments.length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      Aucun document
+                    </Typography>
+                  )}
+                </Grid>
+              </Grid>
+            </Box>
+          </DialogContent>
+          
+          <DialogActions>
+            <Button onClick={() => {
+              setEditContractModalOpen(false);
+              // Clear all contract-related states when canceling
+              setSelectedContractForEdit(null);
+              setContractDocuments([]);
+              setNewContractDocuments([]);
+              setDeletedContractDocuments([]);
+            }} color="secondary">
+              Annuler
+            </Button>
+            <Button onClick={handleContractEditSuccess} variant="contained" color="primary">
+              Confirmer
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* View Contract Documents Modal */}
+        <Dialog open={viewDocumentsModalOpen} onClose={() => {
+          setViewDocumentsModalOpen(false);
+          setSelectedContractForDocuments(null);
+          setContractDocuments([]);
+        }} maxWidth="md" fullWidth>
+          <DialogTitle>Documents du contrat</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              {contractDocuments.length === 0 ? (
+                <Typography variant="body2" color="text.secondary" align="center">
+                  Aucun document trouvé pour ce contrat
+                </Typography>
+              ) : (
+                <Grid container spacing={2}>
+                  {contractDocuments.map((doc, index) => (
+                    <Grid item xs={12} sm={6} md={4} key={index}>
+                      <Card 
+                        sx={{ 
+                          cursor: 'pointer',
+                          '&:hover': { boxShadow: 3 }
+                        }}
+                        onClick={() => handleDocumentClick(doc)}
+                      >
+                        <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                          <DescriptionIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
+                          <Typography variant="body2" noWrap>
+                            {doc.fichierNom || doc.name || `Document ${index + 1}`}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Cliquez pour voir
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Box>
+          </DialogContent>
+          
+          <DialogActions>
+            <Button onClick={() => setViewDocumentsModalOpen(false)} color="primary">
+              Fermer
             </Button>
           </DialogActions>
         </Dialog>

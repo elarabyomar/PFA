@@ -2,6 +2,7 @@ from pydantic import BaseModel, field_validator
 from typing import Optional, List, Union
 from datetime import date, datetime
 import logging
+from decimal import Decimal
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -70,7 +71,7 @@ class ClientCreateWithDocuments(BaseModel):
     email: Optional[str] = None
     statut: Optional[str] = None
     importance: Optional[str] = None
-    budget: Optional[str] = None
+    budget: Optional[Decimal] = None
     proba: Optional[str] = None
     
     # Particulier fields (if applicable)
@@ -95,7 +96,7 @@ class ClientCreateWithDocuments(BaseModel):
     # Societe fields (if applicable)
     nom: Optional[str] = None  # SOCIETE name field
     formeJuridique: Optional[str] = None
-    capital: Optional[float] = None
+    capital: Optional[Decimal] = None
     registreCom: Optional[str] = None
     taxePro: Optional[str] = None
     idFiscal: Optional[str] = None
@@ -148,12 +149,24 @@ class ClientCreateWithDocuments(BaseModel):
     
     @field_validator('capital', mode='before')
     @classmethod
-    def validate_float_fields(cls, v):
+    def validate_decimal_fields(cls, v):
         if v is None or v == '':
             return None
         if isinstance(v, str):
             try:
-                return float(v) if v.strip() else None
-            except ValueError:
+                return Decimal(v) if v.strip() else None
+            except (ValueError, TypeError):
+                return None
+        return v
+    
+    @field_validator('budget', mode='before')
+    @classmethod
+    def validate_budget_field(cls, v):
+        if v is None or v == '':
+            return None
+        if isinstance(v, str):
+            try:
+                return Decimal(v) if v.strip() else None
+            except (ValueError, TypeError):
                 return None
         return v

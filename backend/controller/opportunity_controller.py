@@ -16,6 +16,16 @@ logger.info(f"🔍 Logger name: {__name__}")
 
 router = APIRouter(prefix="/api/opportunities", tags=["opportunities"])
 
+@router.get("/", response_model=List[OpportunityResponse])
+async def get_all_opportunities(session: AsyncSession = Depends(get_session)):
+    """Get all opportunities with client information"""
+    try:
+        service = OpportunityService(session)
+        opportunities = await service.get_all_opportunities()
+        return opportunities
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/client/{client_id}", response_model=List[OpportunityResponse])
 async def get_opportunities_by_client(client_id: int, session: AsyncSession = Depends(get_session)):
     """Get all opportunities for a specific client"""

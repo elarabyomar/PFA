@@ -328,3 +328,29 @@ class DocumentService:
         except Exception as e:
             logger.error(f"❌ DocumentService.delete_document() failed: {str(e)}")
             raise
+
+    async def get_documents_by_entity(self, entity_type: str, entity_id: int) -> List[DocumentResponse]:
+        """Get all documents for a specific entity (client, contract, etc.)"""
+        logger.info(f"🔍 DocumentService.get_documents_by_entity() called for entity_type: {entity_type}, entity_id: {entity_id}")
+        try:
+            documents = await self.repository.get_documents_by_entity(entity_type, entity_id)
+            logger.info(f"📄 Retrieved {len(documents)} documents from repository for {entity_type} {entity_id}")
+            
+            # Convert to DTOs
+            document_responses = [DocumentResponse.from_orm(doc) for doc in documents]
+            logger.info(f"✅ Converted {len(document_responses)} documents to DTOs")
+            
+            return document_responses
+        except Exception as e:
+            logger.error(f"❌ DocumentService.get_documents_by_entity() failed: {str(e)}")
+            raise
+
+    async def link_document_to_entity(self, document_id: int, entity_type: str, entity_id: int) -> bool:
+        """Link a document to an entity"""
+        logger.info(f"🔍 DocumentService.link_document_to_entity() called for document_id: {document_id}, entity_type: {entity_type}, entity_id: {entity_id}")
+        try:
+            success = await self.repository.link_document_to_entity(document_id, entity_type, entity_id)
+            return success
+        except Exception as e:
+            logger.error(f"❌ DocumentService.link_document_to_entity() failed: {str(e)}")
+            raise

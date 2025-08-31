@@ -13,6 +13,7 @@ logger.info(f"🔍 Logger name: {__name__}")
 Base = declarative_base()
 logger.info("🔍 Client Base declarative_base created")
 
+
 class Client(Base):
     __tablename__ = 'clients'
     
@@ -23,7 +24,7 @@ class Client(Base):
     tel = Column(String(50))
     email = Column(String(100))
     importance = Column(String(255))
-    budget = Column(String(255))
+    budget = Column(Numeric(15, 2))
     proba = Column(String(255))
     
     # Relationships - explicitly specify foreign keys to avoid ambiguity

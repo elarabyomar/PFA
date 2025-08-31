@@ -64,5 +64,11 @@ export const clientService = {
   getClientDetails: async (clientId) => {
     const response = await api.get(`/api/clients/${clientId}/details`);
     return response.data;
+  },
+
+  // Get all clients without pagination (for dropdowns)
+  getAllClients: async () => {
+    const response = await api.get('/api/clients?limit=1000');
+    return response.data.clients || response.data;
   }
 };
