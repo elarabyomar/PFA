@@ -632,7 +632,9 @@ async def create_table_row(
         values = list(processed_data.values())
         placeholders = [f":{col}" for col in columns]
         
-        insert_sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(placeholders)}) RETURNING *"
+        # CORRECTION: Quoter les noms de colonnes pour respecter la casse
+        quoted_columns = [f'"{col}"' for col in columns]
+        insert_sql = f"INSERT INTO {table_name} ({', '.join(quoted_columns)}) VALUES ({', '.join(placeholders)}) RETURNING *"
         
         print(f"🔍 SQL généré: {insert_sql}")
         print(f"🔍 Données traitées: {processed_data}")
@@ -687,7 +689,8 @@ async def update_table_row(
             )
         
         # Construire la requête UPDATE dynamiquement
-        set_clauses = [f"{col} = :{col}" for col in row_data.keys()]
+        # CORRECTION: Quoter les noms de colonnes pour respecter la casse
+        set_clauses = [f'"{col}" = :{col}' for col in row_data.keys()]
         update_sql = f"UPDATE {table_name} SET {', '.join(set_clauses)} WHERE id = :row_id RETURNING *"
         
         # Ajouter l'ID à la requête
