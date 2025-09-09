@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, field_serializer
 from typing import Optional, Union
 from datetime import date, datetime
 from decimal import Decimal
@@ -42,6 +42,13 @@ class ContractBase(BaseModel):
             return v
         else:
             raise ValueError(f'Invalid date type: {type(v)}')
+    
+    @field_serializer('prime')
+    def serialize_prime(self, value):
+        """Serialize Decimal to float for JSON response"""
+        if value is None:
+            return None
+        return float(value)
     
     class Config:
         from_attributes = True

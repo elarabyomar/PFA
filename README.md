@@ -124,15 +124,36 @@ docker-compose up --build
 
 ## 🔐 Authentification
 
-### Comptes par Défaut
-- **Admin** : `admin@admin.com` / `admin123`
-- **Utilisateur** : `user@user.com` / `user123`
+### 🚀 Accès Initial (Étape Essentielle)
+
+Pour accéder à l'application, suivez ces étapes :
+
+1. **Connexion Admin Initiale**
+   - **Email** : `admin@gmail.com`
+   - **Mot de passe** : `admin`
+   - Vous serez automatiquement redirigé vers la page de changement de mot de passe
+
+2. **Changement de Mot de Passe Admin**
+   - Choisissez un nouveau mot de passe sécurisé
+   - Une fois changé, vous aurez accès au profil administrateur
+
+3. **Création d'Utilisateurs**
+   - Depuis le profil admin, accédez à "Gestion des Utilisateurs"
+   - Créez un nouvel utilisateur avec l'email de votre choix
+   - L'utilisateur sera créé avec un mot de passe temporaire
+
+4. **Connexion Utilisateur**
+   - Déconnectez-vous du profil admin
+   - Connectez-vous avec l'email créé
+   - **Mot de passe** : Date de naissance au format `AAAAMMJJ` (ex: `20030705` pour le 5 juillet 2003)
+   - Vous serez redirigé vers la page de changement de mot de passe
 
 ### Sécurité
 - Authentification JWT
 - Chiffrement des mots de passe
 - Gestion des rôles et permissions
 - Changement de mot de passe obligatoire au premier login
+- Mot de passe temporaire basé sur la date de naissance
 
 ## 🗄️ Base de Données
 

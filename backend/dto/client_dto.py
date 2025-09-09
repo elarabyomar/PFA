@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import Optional
 from decimal import Decimal
 import logging
@@ -75,6 +75,13 @@ class ClientResponse(ClientBase):
     id: int
     nom: str  # Computed field: nom+prenom for particulier, nom for societe
     isAssociated: Optional[bool] = False  # Whether this client is associated with another client
+    
+    @field_serializer('budget')
+    def serialize_budget(self, value):
+        """Serialize Decimal to float for JSON response"""
+        if value is None:
+            return None
+        return float(value)
     
     class Config:
         from_attributes = True
@@ -169,6 +176,13 @@ class SocieteUpdate(BaseModel):
 
 class SocieteResponse(SocieteBase):
     idClient: int
+    
+    @field_serializer('capital')
+    def serialize_capital(self, value):
+        """Serialize Decimal to float for JSON response"""
+        if value is None:
+            return None
+        return float(value)
     
     class Config:
         from_attributes = True

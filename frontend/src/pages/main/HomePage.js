@@ -109,8 +109,18 @@ const HomePage = () => {
     const mediumImportance = clients.filter(c => c.importance >= 5 && c.importance < 8).length;
     const lowImportance = clients.filter(c => c.importance < 5).length;
     
-    // Calculate average budget
-    const totalBudget = clients.reduce((sum, c) => sum + (c.budget || 0), 0);
+    // Calculate average budget - properly handle string/Decimal conversion
+    const totalBudget = clients.reduce((sum, c) => {
+      const budgetValue = c.budget;
+      
+      if (budgetValue === null || budgetValue === undefined || budgetValue === '') {
+        return sum;
+      }
+      // Convert to number, handling both string and number types
+      const numericBudget = typeof budgetValue === 'string' ? parseFloat(budgetValue) : Number(budgetValue);
+      
+      return sum + (isNaN(numericBudget) ? 0 : numericBudget);
+    }, 0);
     const avgBudget = total > 0 ? totalBudget / total : 0;
     
     return {
@@ -161,8 +171,18 @@ const HomePage = () => {
     const dureeFerme = contracts.filter(c => c.typeContrat === 'Duree ferme').length;
     const dureeCampagne = contracts.filter(c => c.typeContrat === 'Duree campagne').length;
     
-    // Calculate total and average prime
-    const totalPrime = contracts.reduce((sum, c) => sum + (c.prime || 0), 0);
+    // Calculate total and average prime - properly handle string/Decimal conversion
+    const totalPrime = contracts.reduce((sum, c) => {
+      const primeValue = c.prime;
+      
+      if (primeValue === null || primeValue === undefined || primeValue === '') {
+        return sum;
+      }
+      // Convert to number, handling both string and number types
+      const numericPrime = typeof primeValue === 'string' ? parseFloat(primeValue) : Number(primeValue);
+      
+      return sum + (isNaN(numericPrime) ? 0 : numericPrime);
+    }, 0);
     const avgPrime = total > 0 ? totalPrime / total : 0;
     
     // Calculate contracts by month (last 6 months)
