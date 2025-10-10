@@ -62,8 +62,20 @@ async def change_password(session: AsyncSession, user_id: int, current_password:
     elif not pwd_context.verify(current_password, user.password):
         return False, "Mot de passe actuel incorrect"
     
+    # Vérifier la longueur du nouveau mot de passe
+    if len(new_password) > 72:
+        return False, "Le mot de passe ne peut pas dépasser 72 caractères"
+    
     # Hasher le nouveau mot de passe
-    hashed_password = pwd_context.hash(new_password)
+    try:
+        hashed_password = pwd_context.hash(new_password)
+    except ValueError as e:
+        if "password cannot be longer than 72 bytes" in str(e):
+            return False, "Le mot de passe ne peut pas dépasser 72 caractères"
+        else:
+            return False, "Erreur lors du hachage du mot de passe"
+    except Exception as e:
+        return False, f"Erreur inattendue lors du hachage: {str(e)}"
     
     # Mettre à jour le mot de passe et marquer comme changé
     user_data = {

@@ -290,4 +290,4 @@ Votre application de gestion d'assurance est maintenant prête à être utilisé
 
 ---
 
-**Développé avec ❤️ pour le PFA - Système de Gestion d'Assurance**
+

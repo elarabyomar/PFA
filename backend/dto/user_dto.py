@@ -10,7 +10,7 @@ class UserCreateDTO(BaseModel):
     nom: str = Field(..., min_length=2, max_length=50, description="Nom de l'utilisateur")
     prenom: str = Field(..., min_length=2, max_length=50, description="Prénom de l'utilisateur")
     email: str = Field(..., description="Email unique de l'utilisateur")  # Simplifié
-    password: Optional[str] = Field(None, min_length=6, description="Mot de passe de l'utilisateur (optionnel, généré automatiquement si non fourni)")
+    password: Optional[str] = Field(None, min_length=6, max_length=72, description="Mot de passe de l'utilisateur (optionnel, généré automatiquement si non fourni)")
     date_naissance: date = Field(..., description="Date de naissance (format: YYYY-MM-DD)")
     role: str = Field(..., description="Rôle de l'utilisateur")
 
@@ -37,7 +37,7 @@ class UserResponseDTO(BaseModel):
 
 class ChangePasswordDTO(BaseModel):
     current_password: str
-    new_password: str
+    new_password: str = Field(..., min_length=6, description="Nouveau mot de passe (minimum 6 caractères)")
     confirm_password: str
 
 
